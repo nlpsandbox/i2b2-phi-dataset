@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  rstudio:
+    image: sagebionetworks/challenge-analysis:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: challenge-analysis
+    env_file:
+      - .env
+    volumes:
+      - .:/home/rstudio/challenge-analysis:rw
+    ports:
+      - "${HOST_PORT}:8787"
+    command: rstudio
