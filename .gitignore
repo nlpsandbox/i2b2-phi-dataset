@@ -1,6 +1,8 @@
 # Project specific files
 .empty/
 .env
+data/
+output/
 renv/
 notebooks/**/*.html
 notebooks/**/*.log
