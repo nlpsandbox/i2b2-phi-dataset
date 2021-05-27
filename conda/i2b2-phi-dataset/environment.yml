@@ -1,4 +1,4 @@
-name: challenge-analysis
+name: i2b2-phi-analysis
 channels:
   - defaults
 dependencies:

@@ -2,15 +2,15 @@ version: "3.8"
 
 services:
   rstudio:
-    image: sagebionetworks/challenge-analysis:0.1.0
+    image: nlpsandbox/i2b2-phi-dataset:0.1.0
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: challenge-analysis
+    container_name: i2b2-phi-dataset
     env_file:
       - .env
     volumes:
-      - .:/home/rstudio/challenge-analysis:rw
+      - .:/home/rstudio/i2b2-phi-dataset:rw
     ports:
       - "${HOST_PORT}:8787"
     command: rstudio

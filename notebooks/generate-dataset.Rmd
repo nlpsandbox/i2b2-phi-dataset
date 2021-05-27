@@ -1,0 +1,126 @@
+---
+title: "Interacting with Synapse API"
+author: "Sage Bionetworks"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    code_fold: show
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(reticulate)
+library(stringr)
+```
+
+# Introduction
+
+1. Pull the data of the 2014 i2b2 NLP De-identification Challenge from Synapse.
+2. Convert the dataset to the NLP Sandbox schemas.
+3. Push the new dataset to Synapse (training and evaluation).
+
+# Requirements
+
+Set the value of `SYNAPSE_TOKEN` in the configuration file `.env` to one of your
+Synapse personal access tokens. Token can be generated in Synapse via your User
+Menu > Settings > Persona Access Tokens.
+
+# Conda environments
+
+List the Conda environments.
+
+```{r}
+options(reticulate.repl.quiet = TRUE)
+conda_list(conda = "auto")
+```
+
+Activate the environment `sage-bionetworks`.
+
+```{r}
+use_condaenv("i2b2-phi-analysis", required = TRUE)
+```
+
+# Logging into Synapse
+
+```{r}
+synapseclient <- reticulate::import('synapseclient')
+syn <- synapseclient$Synapse()
+syn$login()
+```
+
+# Settings
+
+```{r}
+# Original files of the 2014 i2b2 NLP De-identification challenge.
+dataset_archives = list(
+  training_1 = list(
+    synId = "syn23196860",  # official-2014_training-PHI-Gold-Set1.tar.gz
+    type = "training"
+  ),
+  training_2 = list(
+    synId = "syn23196850",  # official-training-PHI-Gold-Set2.tar.gz
+    type = "training"
+  ),
+  evaluation = list(
+    synId = "syn23196857",  # official-testing-PHI-Gold-fixed.tar.gz
+    type = "evaluation"
+  )
+)
+
+project_dir <- rprojroot::find_rstudio_root_file()
+data_dir <- file.path(project_dir, "data")
+output_dir <- file.path(project_dir, "output")
+
+# Output
+job_name <- "i2b2-phi-dataset-nlpsandbox"
+job_version <- "0.1.1"
+job_dir <- file.path(output_dir, job_name)
+job_output_dir <- file.path(job_dir, job_version)
+
+# Local outputs
+output_files = list(
+  training = list(
+    annotations_tsv = file.path(job_output_dir, paste0("training-set-annotations.tsv")),
+    annotations_json = file.path(job_output_dir, paste0("training-set-annotations.json")),
+    patients_json = file.path(job_output_dir, paste0("training-set-patients.json"))
+  ),
+  evaluation = list(
+    annotations_tsv = file.path(job_output_dir, paste0("evaluation-set-annotations.tsv")),
+    annotations_json = file.path(job_output_dir, paste0("evaluation-set-annotations.json")),
+    patients_json = file.path(job_output_dir, paste0("evaluation-set-patients.json"))
+  )
+)
+
+# Number of CPU cores
+num_cores = parallel::detectCores()
+```
+
+
+# Pulling the dataset from Synapse
+
+Get the dataset archives from Synapse, extract them and get the paths to the XML
+files. Each XML file includes the text of the clinical note (TEXT node) and a 
+list of annotations (TAGS node).
+
+```{r}
+dataset_archives <- lapply(dataset_archives, function(archive) {
+  file_handle <- syn$get(archive$synId, downloadLocation=data_dir, 
+                         ifcollision='overwrite.local')
+  
+  # Extract tar.gz archive and get list of XML files
+  untar(file_handle$path, exdir=data_dir)
+  xml_paths <- file.path(data_dir, untar(file_handle$path, list=TRUE)) %>%
+    str_subset(pattern = "\\.xml$")
+  
+  archive$xml_paths <- xml_paths
+  archive
+})
+```
+
