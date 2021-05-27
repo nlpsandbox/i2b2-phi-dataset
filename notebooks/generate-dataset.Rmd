@@ -14,6 +14,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(reticulate)
+library(stringr)
 ```
 
 # Introduction
@@ -33,9 +37,7 @@ Menu > Settings > Persona Access Tokens.
 List the Conda environments.
 
 ```{r}
-library(reticulate)
 options(reticulate.repl.quiet = TRUE)
-
 conda_list(conda = "auto")
 ```
 
