@@ -1,8 +1,8 @@
 # i2b2 PHI dataset for the NLP Sandbox
 
-[![GitHub Release](https://img.shields.io/github/release/Sage-Bionetworks-Challenges/challenge-analysis.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/Sage-Bionetworks-Challenges/challenge-analysis/releases)
-[![GitHub CI](https://img.shields.io/github/workflow/status/Sage-Bionetworks-Challenges/challenge-analysis/CI.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/Sage-Bionetworks-Challenges/challenge-analysis)
-[![GitHub License](https://img.shields.io/github/license/Sage-Bionetworks-Challenges/challenge-analysis.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/Sage-Bionetworks-Challenges/challenge-analysis/blob/main/LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/nlpsandbox/i2b2-phi-dataset.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset/releases)
+[![GitHub CI](https://img.shields.io/github/workflow/status/nlpsandbox/i2b2-phi-dataset/CI.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset)
+[![GitHub License](https://img.shields.io/github/license/nlpsandbox/i2b2-phi-dataset.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset/blob/main/LICENSE)
 
 Generation of the i2b2 PHI dataset for the NLP Sandbox
 
