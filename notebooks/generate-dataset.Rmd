@@ -88,7 +88,14 @@ dataset_archives = list(
   )
 )
 
-output_dir_syn_id <- "syn25807888"
+dataset_output_syn_folders = list(
+  full = list(
+    syn_id = "syn25807888"
+  ),
+  example = list(
+    syn_id = "syn25812243"
+  )
+)
 
 project_dir <- rprojroot::find_rstudio_root_file()
 data_dir <- file.path(project_dir, "data")
@@ -414,78 +421,188 @@ names(contact_annotations) <- names(datasets)
 
 
 
-# Exporting data to JSON files
+# Exporting data to files
 
-### Exporting annotations
-
-```{r}
-# create output dir if needed
-dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
-# save the annotations of the training and evaluation set
-noop <- lapply(names(datasets), function(dataset_name) {
-  annotations_json <- jsonlite::toJSON(
-    c(date_annotations[[dataset_name]] %>% purrr::transpose(), 
-      person_name_annotations[[dataset_name]] %>% purrr::transpose(),
-      physical_address_annotations[[dataset_name]] %>% purrr::transpose()),
-    auto_unbox = TRUE,
-    pretty = TRUE)
-  write(annotations_json, output_files[[dataset_name]]$annotations_json)
-})
-```
-
-### Exporting patients
+### Full dataset
 
 ```{r}
 # create output dir if needed
 dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+
 # save the patients of the training and evaluation set
 noop <- lapply(names(datasets), function(dataset_name) {
+  # dataset_name <- "evaluation"
   dataset <- datasets[[dataset_name]]
   patient_ids <- sort(unique(dataset$annotations$patient_id))
-  
-  patients <- lapply(patient_ids, function(patient_id) {
-    list(
+  # patient_ids <- patient_ids[1:2]
+  patient_bundles <- lapply(patient_ids, function(patient_id) {
+    # patient_id <- "110"
+    
+    # create FHIR Patient object
+    patient <- list(
       identifier = patient_id,
       gender = 'unknown'
     )
+
+    # create Notes objects for the patient specified
+    tag <- paste0(patient_id, "-")
+    xml_paths <- sort(dataset$xml_paths[grepl(tag, dataset$xml_paths)])
+    note_bundles <- lapply(xml_paths, function(xml_path){
+      # xml_path <- "/home/rstudio/nlp-sandbox-analysis/data/testing-PHI-Gold-fixed/110-01.xml"
+      # create note object
+      note_xml_doc <- read_xml(xml_path, options = "NOCDATA")
+      note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
+      note <- list(
+        text=note_text,
+        noteType="",
+        patientId="PATIENT_ID"
+      )
+      
+      # create the Annotation objects for the note specified
+      noteId <- gsub(pattern = "\\.xml$", "", basename(xml_path))
+    
+      ## get date annotations
+      df <- date_annotations[[dataset_name]]
+      df <- df[df$noteId == noteId,]
+      text_date_annotations <- df %>% purrr::transpose()
+      
+      ## get person name annotations
+      df <- person_name_annotations[[dataset_name]]
+      df <- df[df$noteId == noteId,]
+      text_person_name_annotations <- df %>% purrr::transpose()
+      
+      ## get physical address annotations
+      df <- physical_address_annotations[[dataset_name]]
+      df <- df[df$noteId == noteId,]
+      text_physical_address_annotations <- df %>% purrr::transpose()
+      
+      annotation=list(
+        annotationSource=list(
+          resourceSource=list(
+            name="NOTE_NAME"
+          )
+        ),
+        textDateAnnotations=text_date_annotations,
+        textPersonNameAnnotations=text_person_name_annotations,
+        textPhysicalAddressAnnotations=text_physical_address_annotations
+      )
+
+      # create note bundle
+      note_bundle <- list(
+        note=note,
+        annotation=annotation
+      )
+    })
+    
+    # create patient bundle
+    patient_bundle <- list(
+      patient=patient,
+      note_bundles=note_bundles
+    )
   })
-  patients_json <- jsonlite::toJSON(patients, auto_unbox = TRUE, pretty = TRUE)
-  write(patients_json, output_files[[dataset_name]]$patients_json)
+  
+  data <- list(
+    patient_bundles=patient_bundles
+  )
+  
+  # create output dataset directory and save bundles
+  # dataset_dir <- file.path(job_output_dir, dataset_name)
+  dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+  data_json <- jsonlite::toJSON(data, auto_unbox = TRUE, pretty = TRUE)
+  write(data_json, file.path(job_output_dir, paste0("i2b2-phi-dataset-", dataset_name, ".json")))
 })
 ```
 
-### Exporting notes
+### Preview dataset
 
 ```{r}
 # create output dir if needed
 dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
-# save the note of a given patient to one JSON file
-# jsonlite::toJSON() escapes them double quotes
-noop <- lapply(names(datasets), function(dataset_name) {
-  dataset <- datasets[[dataset_name]]
-  patient_ids <- sort(unique(dataset$annotations$patient_id))
+
+dataset_name <- "evaluation"
+dataset <- datasets[[dataset_name]]
+patient_ids <- c("110")
+
+# patient_ids <- patient_ids[1:2]
+patient_bundles <- lapply(patient_ids, function(patient_id) {
+  # create FHIR Patient object
+  patient <- list(
+    identifier = patient_id,
+    gender = 'unknown'
+  )
+
+  # create Notes objects for the patient specified
+  tag <- paste0(patient_id, "-")
+  xml_paths <- sort(dataset$xml_paths[grepl(tag, dataset$xml_paths)])
+  note_bundles <- lapply(xml_paths, function(xml_path){
+    # create note object
+    note_xml_doc <- read_xml(xml_path, options = "NOCDATA")
+    note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
+    note <- list(
+      text=note_text,
+      noteType="",
+      patientId="PATIENT_ID"
+    )
+    
+    # create the Annotation objects for the note specified
+    noteId <- gsub(pattern = "\\.xml$", "", basename(xml_path))
   
-  mclapply(patient_ids, function(patient_id) {
-    tag <- paste0(patient_id, "-")
-    xml_paths <- sort(dataset$xml_paths[grepl(tag, dataset$xml_paths)])
-    notes <- lapply(xml_paths, function(xml_path){
-      note_xml_doc <- read_xml(xml_path, options = "NOCDATA")
-      note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
-      list(
-        text = note_text,
-        noteType = "",
-        patientId = "PATIENT_ID"
-      )
-    })
-    notes_json <- jsonlite::toJSON(notes, auto_unbox = TRUE, pretty = TRUE)
-    write(notes_json, file.path(job_output_dir, paste0(dataset_name, "_set_patient_", patient_id, "_notes.json")))
-  }, mc.cores = num_cores, mc.set.seed = TRUE)
+    ## get date annotations
+    df <- date_annotations[[dataset_name]]
+    df <- df[df$noteId == noteId,]
+    text_date_annotations <- df %>% purrr::transpose()
+    
+    ## get person name annotations
+    df <- person_name_annotations[[dataset_name]]
+    df <- df[df$noteId == noteId,]
+    text_person_name_annotations <- df %>% purrr::transpose()
+    
+    ## get physical address annotations
+    df <- physical_address_annotations[[dataset_name]]
+    df <- df[df$noteId == noteId,]
+    text_physical_address_annotations <- df %>% purrr::transpose()
+    
+    annotation=list(
+      annotationSource=list(
+        resourceSource=list(
+          name="NOTE_NAME"
+        )
+      ),
+      textDateAnnotations=text_date_annotations,
+      textPersonNameAnnotations=text_person_name_annotations,
+      textPhysicalAddressAnnotations=text_physical_address_annotations
+    )
+
+    # create note bundle
+    note_bundle <- list(
+      note=note,
+      annotation=annotation
+    )
+  })
+  
+  # create patient bundle
+  patient_bundle <- list(
+    patient=patient,
+    note_bundles=note_bundles
+  )
 })
+
+data <- list(
+  patient_bundles=patient_bundles
+)
+
+# create output dataset directory and save bundles
+# dataset_dir <- file.path(job_output_dir, dataset_name)
+dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+data_json <- jsonlite::toJSON(data, auto_unbox = TRUE, pretty = TRUE)
+write(data_json, file.path(job_output_dir, paste0("i2b2-phi-dataset-example.json")))
 ```
 
 
 
 # Exporting data files to Synapse
+
+### Full dataset
 
 ```{python}
 from os import walk, path
