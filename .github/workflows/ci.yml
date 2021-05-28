@@ -177,51 +177,51 @@ jobs:
     #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
     #     repository: ${{ env.docker_repository }}
 
-    # - name: Prepare to publish HTML notebooks to GH Pages
-    #   if: steps.prep.outputs.push_notebooks == 'true'
-    #   run: |
-    #     git clone ${{ env.clone_url }} \
-    #       --branch gh-pages --single-branch gh-pages
+    - name: Prepare to publish HTML notebooks to GH Pages
+      if: steps.prep.outputs.push_notebooks == 'true'
+      run: |
+        git clone ${{ env.clone_url }} \
+          --branch gh-pages --single-branch gh-pages
 
-    #     # Update gh-pages: version specified
-    #     NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version }}/notebooks
-    #     rm -fr ${NOTEBOOKS_TARGET_DIR}
-    #     mkdir -p ${NOTEBOOKS_TARGET_DIR}
-    #     cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
+        # Update gh-pages: version specified
+        NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version }}/notebooks
+        rm -fr ${NOTEBOOKS_TARGET_DIR}
+        mkdir -p ${NOTEBOOKS_TARGET_DIR}
+        cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
-    #     # Update gh-pages: latest, major, and minor versions
-    #     if [ ! -z "${{ steps.prep.outputs.version_major }}" ]; then
-    #       # Update latest (e.g. "1.2.3" => "latest")
-    #       NOTEBOOKS_TARGET_DIR=gh-pages/latest/notebooks
-    #       rm -fr ${NOTEBOOKS_TARGET_DIR}
-    #       mkdir -p ${NOTEBOOKS_TARGET_DIR}
-    #       cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
+        # Update gh-pages: latest, major, and minor versions
+        if [ ! -z "${{ steps.prep.outputs.version_major }}" ]; then
+          # Update latest (e.g. "1.2.3" => "latest")
+          NOTEBOOKS_TARGET_DIR=gh-pages/latest/notebooks
+          rm -fr ${NOTEBOOKS_TARGET_DIR}
+          mkdir -p ${NOTEBOOKS_TARGET_DIR}
+          cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
-    #       # Update major version (e.g. "1.2.3" => "1")
-    #       NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_major }}/notebooks
-    #       rm -fr ${NOTEBOOKS_TARGET_DIR}
-    #       mkdir -p ${NOTEBOOKS_TARGET_DIR}
-    #       cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
+          # Update major version (e.g. "1.2.3" => "1")
+          NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_major }}/notebooks
+          rm -fr ${NOTEBOOKS_TARGET_DIR}
+          mkdir -p ${NOTEBOOKS_TARGET_DIR}
+          cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
-    #       # Update minor version (e.g. "1.2.3" => "1.2")
-    #       NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_minor }}/notebooks
-    #       rm -fr ${NOTEBOOKS_TARGET_DIR}
-    #       mkdir -p ${NOTEBOOKS_TARGET_DIR}
-    #       cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
-    #     fi
-    #     cd gh-pages
-    #     git config --local user.email "action@github.com"
-    #     git config --local user.name "GitHub Action"
-    #     git add .
-    #     git commit -m "Update notebooks" -a || true
-    #     # The above command will fail if no changes were present, so we ignore
-    #     # that.
+          # Update minor version (e.g. "1.2.3" => "1.2")
+          NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_minor }}/notebooks
+          rm -fr ${NOTEBOOKS_TARGET_DIR}
+          mkdir -p ${NOTEBOOKS_TARGET_DIR}
+          cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
+        fi
+        cd gh-pages
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update notebooks" -a || true
+        # The above command will fail if no changes were present, so we ignore
+        # that.
 
-    # - name: Push to gh-pages
-    #   if: steps.prep.outputs.push_notebooks == 'true'
-    #   uses: ad-m/github-push-action@master
-    #   with:
-    #     branch: gh-pages
-    #     directory: gh-pages
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
-    #     force: true
+    - name: Push to gh-pages
+      if: steps.prep.outputs.push_notebooks == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        branch: gh-pages
+        directory: gh-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        force: true
