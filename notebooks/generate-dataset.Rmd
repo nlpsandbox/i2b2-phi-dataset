@@ -1,6 +1,6 @@
 ---
 title: "Generating the i2b2 PHI dataset for the NLP Sandbox"
-author: "Thomas Schaffter (thomas.schaffter@pm.me)"
+author: "NLP Sandbox Team (team@nlpsandbox.io)"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -148,7 +148,7 @@ num_cores = parallel::detectCores()
 
 
 
-# Pulling i2b2 dataset from Synapse
+# Pulling data from Synapse
 
 Get the dataset archives from Synapse, extract them and get the paths to the XML
 files. Each XML file includes the text of the clinical note (TEXT node) and a
@@ -197,7 +197,7 @@ lapply(datasets, function(dataset) { length(dataset$xml_paths) })
 
 
 
-# Generating i2b2 dataset using NLP Sandbox Schemas
+# Generating the dataset using NLP Sandbox Schemas
 
 Extract the annotations from the XML files and save them to data frames.
 
@@ -620,6 +620,14 @@ dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
 data_json <- jsonlite::toJSON(data, auto_unbox = TRUE, pretty = TRUE)
 write(data_json, file.path(job_output_dir, paste0("i2b2-phi-dataset-example.json")))
 ```
+
+### Generated files
+
+```{r}
+list.files(path=job_output_dir, full.names=TRUE)
+```
+
+
 
 <!-- Links -->
 

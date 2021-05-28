@@ -8,6 +8,9 @@ notebooks/**/*.html
 notebooks/**/*.log
 notebooks/**/*.tex
 
+!data/.gitkeep
+!output/.gitkeep
+
 # History files
 .Rhistory
 .Rapp.history
