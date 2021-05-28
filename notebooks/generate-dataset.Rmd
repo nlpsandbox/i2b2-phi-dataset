@@ -97,27 +97,26 @@ syn$login()
 ### Configuration
 
 ```{r}
-# NLP Sandbox schemas version
-schemas_version <- "1.1.1"
-# Output dataset version
-dataset_version <- "0.1.0"
+schemas_version <- Sys.getenv("APP_NLPSANDBOX_SCHEMAS_VERSION")
+dataset_version <- Sys.getenv("APP_DATASET_VERSION")
 
 # Original files of the 2014 i2b2 NLP De-identification challenge.
 dataset_archives = list(
   training_1 = list(
-    synId = "syn23196860",  # official-2014_training-PHI-Gold-Set1.tar.gz
+    synId = "syn23196860",  # 2014_training-PHI-Gold-Set1.tar.gz
     type = "training"
   ),
   training_2 = list(
-    synId = "syn23196850",  # official-training-PHI-Gold-Set2.tar.gz
+    synId = "syn23196850",  # training-PHI-Gold-Set2.tar.gz
     type = "training"
   ),
   evaluation = list(
-    synId = "syn23196857",  # official-testing-PHI-Gold-fixed.tar.gz
+    synId = "syn23196857",  # testing-PHI-Gold-fixed.tar.gz
     type = "evaluation"
   )
 )
 
+# Project folders
 project_dir <- rprojroot::find_rstudio_root_file()
 data_dir <- file.path(project_dir, "data")
 output_dir <- file.path(project_dir, "output")
