@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   rstudio:
-    image: syn22277123/i2b2-phi-dataset:1.0.0
+    image: docker.synapse.org/syn22277123/i2b2-phi-dataset:latest
     build:
       context: .
       dockerfile: Dockerfile

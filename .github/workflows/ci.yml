@@ -12,7 +12,7 @@ on:
   pull_request:
 
 env:
-  docker_repository: syn22277123/i2b2-phi-dataset
+  docker_repository: docker.synapse.org/syn22277123/i2b2-phi-dataset
   # github.event.repository.clone_url not available for on: schedule
   clone_url: https://github.com/nlpsandbox/i2b2-phi-dataset.git
   # github.event.repository.default_branch not available for on: schedule
