@@ -144,9 +144,9 @@ jobs:
       run: |
         docker run --rm \
           --env-file .env \
-          -v $(pwd):/data \
+          -v $(pwd):/project \
           rstudio-cached:latest \
-          render /data/notebooks/*.Rmd
+          render /project/notebooks/*.Rmd
 
     - name: Push image
       if: steps.prep.outputs.push_image == 'true'
