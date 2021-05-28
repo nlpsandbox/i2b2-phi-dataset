@@ -31,6 +31,8 @@ library(xml2)
 2. Convert the dataset to the NLP Sandbox schemas.
 3. Push the new dataset to Synapse (training and evaluation).
 
+
+
 # Setup
 
 ### Requirements
@@ -113,6 +115,7 @@ num_cores = parallel::detectCores()
 ```
 
 
+
 # Pulling i2b2 dataset from Synapse
 
 Get the dataset archives from Synapse, extract them and get the paths to the XML
@@ -160,6 +163,8 @@ Number of clinical notes per dataset:
 lapply(datasets, function(dataset) { length(dataset$xml_paths) })
 ```
 
+
+
 # Generating i2b2 dataset using NLP Sandbox schemas
 
 Extract the annotations from the XML files and save them to data frames.
@@ -201,6 +206,7 @@ Number of annotations per dataset:
 lapply(datasets, function(dataset) { nrow(dataset$annotations) })
 ```
 
+
 ## Preparation
 
 ### Setting the type of annotation properties
@@ -217,7 +223,6 @@ datasets <- lapply(datasets, function(dataset) {
   dataset
 })
 ```
-
 
 ### Replacing annotation property `end` by `length`
 
@@ -236,6 +241,7 @@ datasets <- lapply(datasets, function(dataset) {
 # datasets$evaluation$annotations
 names(datasets$evaluation$annotations)
 ```
+
 
 ## Generating annotations
 
@@ -262,15 +268,14 @@ date_annotations <- lapply(names(datasets), function(dataset_name) {
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
-    format = "",
+    confidence = 100,
+    dateFormat = "",
     stringsAsFactors = FALSE)
 })
 names(date_annotations) <- names(datasets)
 ```
 
 ### Person name annotations
-
-Schema: Annotation.yaml
 
 ```{r}
 person_name_annotations <- lapply(names(datasets), function(dataset_name) {
@@ -283,6 +288,7 @@ person_name_annotations <- lapply(names(datasets), function(dataset_name) {
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
+    confidence = 100,
     stringsAsFactors = FALSE)
 })
 names(person_name_annotations) <- names(datasets)
@@ -291,10 +297,8 @@ names(person_name_annotations) <- names(datasets)
 
 ### Physical address annotations
 
-Schema: 
-
 ```{r}
-# Lookup table used to convert address type
+# Lookup table used to convert address types
 addressTypeLUT <- data.frame(
   i2b2 = c("CITY", 
            "COUNTRY", 
@@ -323,11 +327,88 @@ physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
-    type = addressTypeLUT$nlp_sandbox[match(annotations$TYPE, addressTypeLUT$i2b2)],
+    confidence = 100,
+    addressType = addressTypeLUT$nlp_sandbox[match(annotations$TYPE, addressTypeLUT$i2b2)],
     stringsAsFactors = FALSE)
 })
 names(physical_address_annotations) <- names(datasets)
 ```
+
+### ID
+
+```{r}
+# Lookup table used to convert id types
+idTypeLUT <- data.frame(
+  i2b2 = c("ACCOUNT", 
+           "BIOID", 
+           "DEVICE", 
+           "HEALTHPLAN", 
+           "IDNUM", 
+           "LICENSE", 
+           "MEDICALRECORD", 
+           "SSN",
+           "VEHICLE"),
+  nlp_sandbox = c("account",
+                  "bio_id",
+                  "device",
+                  "health_plan",
+                  "id_number",
+                  "license",
+                  "medical_record",
+                  "ssn",
+                  "vehicle")
+)
+id_annotations <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  annotations <- dataset$annotations
+  annotations <- annotations[annotations$name == "ID",]
+  data.frame(
+    noteId = paste0(annotations$patient_id, "-", annotations$note_index),
+    annotationType = "Id",
+    start = annotations$start,
+    length = annotations$length,
+    text = annotations$text,
+    confidence = 100,
+    idType = idTypeLUT$nlp_sandbox[match(annotations$TYPE, idTypeLUT$i2b2)],
+    stringsAsFactors = FALSE)
+})
+names(id_annotations) <- names(datasets)
+```
+
+### Contact information
+
+```{r}
+# Lookup table used to convert contact types
+contactTypeLUT <- data.frame(
+  i2b2 = c("EMAIL", 
+           "FAX", 
+           "IPADDR", 
+           "PHONE", 
+           "URL"),
+  nlp_sandbox = c("email",
+                  "fax",
+                  "ip_address",
+                  "phone",
+                  "url")
+)
+contact_annotations <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  annotations <- dataset$annotations
+  annotations <- annotations[annotations$name == "CONTACT",]
+  data.frame(
+    noteId = paste0(annotations$patient_id, "-", annotations$note_index),
+    annotationType = "Contact",
+    start = annotations$start,
+    length = annotations$length,
+    text = annotations$text,
+    confidence = 100,
+    contactType = contactTypeLUT$nlp_sandbox[match(annotations$TYPE, contactTypeLUT$i2b2)],
+    stringsAsFactors = FALSE)
+})
+names(contact_annotations) <- names(datasets)
+```
+
+
 
 # Exporting data to JSON files
 
@@ -347,7 +428,6 @@ noop <- lapply(names(datasets), function(dataset_name) {
   write(annotations_json, output_files[[dataset_name]]$annotations_json)
 })
 ```
-
 
 ### Exporting patients
 
@@ -369,7 +449,6 @@ noop <- lapply(names(datasets), function(dataset_name) {
   write(patients_json, output_files[[dataset_name]]$patients_json)
 })
 ```
-
 
 ### Exporting notes
 
