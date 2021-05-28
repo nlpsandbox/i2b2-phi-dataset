@@ -16,8 +16,13 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 library(dplyr)
+library(parallel)
+library(purrr)
 library(reticulate)
+library(rlist)
 library(stringr)
+library(tibble)
+library(xml2)
 ```
 
 # Introduction
@@ -26,13 +31,15 @@ library(stringr)
 2. Convert the dataset to the NLP Sandbox schemas.
 3. Push the new dataset to Synapse (training and evaluation).
 
-# Requirements
+# Setup
+
+### Requirements
 
 Set the value of `SYNAPSE_TOKEN` in the configuration file `.env` to one of your
 Synapse personal access tokens. Token can be generated in Synapse via your User
 Menu > Settings > Persona Access Tokens.
 
-# Conda environments
+### Conda environments
 
 List the Conda environments.
 
@@ -41,13 +48,13 @@ options(reticulate.repl.quiet = TRUE)
 conda_list(conda = "auto")
 ```
 
-Activate the environment `sage-bionetworks`.
+Activate the environment `i2b2-phi-analysis`.
 
 ```{r}
 use_condaenv("i2b2-phi-analysis", required = TRUE)
 ```
 
-# Logging into Synapse
+### Logging into Synapse
 
 ```{r}
 synapseclient <- reticulate::import('synapseclient')
@@ -55,9 +62,12 @@ syn <- synapseclient$Synapse()
 syn$login()
 ```
 
-# Settings
+### Configuration
 
 ```{r}
+# NLP Sandbox schemas version
+schemas_version <- "1.1.1"
+
 # Original files of the 2014 i2b2 NLP De-identification challenge.
 dataset_archives = list(
   training_1 = list(
@@ -103,7 +113,7 @@ num_cores = parallel::detectCores()
 ```
 
 
-# Pulling the dataset from Synapse
+# Pulling i2b2 dataset from Synapse
 
 Get the dataset archives from Synapse, extract them and get the paths to the XML
 files. Each XML file includes the text of the clinical note (TEXT node) and a 
@@ -124,3 +134,268 @@ dataset_archives <- lapply(dataset_archives, function(archive) {
 })
 ```
 
+The training and evaluation datasets are split into multiple parts. Combine 
+these parts into training and evaluation datasets. 
+
+```{r}
+datasets <- list(
+  training = list(
+    type = "training",
+    xml_paths = list.filter(dataset_archives, type == 'training') %>%
+      list.select(xml_paths) %>%
+      unlist(use.names = F)
+  ),
+  evaluation = list(
+    type = "evaluation",
+    xml_paths = list.filter(dataset_archives, type == 'evaluation') %>%
+      list.select(xml_paths) %>%
+      unlist(use.names = F)
+  )
+)
+```
+
+Number of clinical notes per dataset:
+
+```{r}
+lapply(datasets, function(dataset) { length(dataset$xml_paths) })
+```
+
+# Generating i2b2 dataset using NLP Sandbox schemas
+
+Extract the annotations from the XML files and save them to data frames.
+
+```{r}
+datasets <- lapply(datasets, function(dataset) {
+  annotations <- do.call(rbind, mclapply(dataset$xml_paths, function(xml_path) {
+    doc <- xml2::read_xml(xml_path)
+    xml_find_all(doc, xpath = "//TAGS/*") %>%
+      purrr::map_dfr(~ {
+        # save the primary type of the annotations
+        name <- xml_name(.)
+        
+        # attributes of the XML tag
+        attrs <- xml_attrs(.) %>% 
+          tibble::enframe() %>%
+          tidyr::spread(name, value)
+        
+        # extract patient id and note index from the note filename
+        df <- strsplit(fs::path_ext_remove(fs::path_file(xml_path)), "-")[[1]]
+        patient_id <- df[1]
+        note_index <- df[2]
+          
+        # combine the annotations
+        cbind.data.frame(name, attrs, patient_id, note_index) %>%
+          tibble::set_tidy_names() %>% 
+          as_tibble()
+      })
+  }, mc.cores = num_cores, mc.set.seed = TRUE))
+  
+  dataset$annotations <- annotations
+  dataset
+})
+```
+
+Number of annotations per dataset:
+
+```{r}
+lapply(datasets, function(dataset) { nrow(dataset$annotations) })
+```
+
+## Preparation
+
+### Setting the type of annotation properties
+
+All the properties are currently strings. The transformation below are applied:
+
+- `start` is set to integer
+- `end` is set to integer
+
+```{r}
+datasets <- lapply(datasets, function(dataset) {
+  dataset$annotations$start <- as.integer(dataset$annotations$start)
+  dataset$annotations$end <- as.integer(dataset$annotations$end)
+  dataset
+})
+```
+
+
+### Replacing annotation property `end` by `length`
+
+The motivation for replacing the property `end` by `length` computed as `end` -
+`start` is that the length is more convenient to user and easier to validate
+because `length` is relative to `start`.
+
+```{r}
+datasets <- lapply(datasets, function(dataset) {
+  if ("end" %in% colnames(dataset$annotations)) {
+    dataset$annotations$length <- dataset$annotations$end - dataset$annotations$start
+    dataset$annotations$end <- NULL
+  }
+  dataset
+})
+# datasets$evaluation$annotations
+names(datasets$evaluation$annotations)
+```
+
+## Generating annotations
+
+### List of annotations
+
+Annotation | Description | NLP Sandbox schema
+-------- | ----------- | -------------
+`TextDateAnnotation`         | A date annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextDateAnnotation.yaml)
+`TextPersonNameAnnotation`         | A person name annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextPersonNameAnnotation)
+`TextPhysicalAddressAnnotation`         | A physical address annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextPhysicalAddressAnnotation.yaml)
+`TextIdAnnotation`         | An ID annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextIdAnnotation.yaml)
+`TextContactAnnotation`         | A contact annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextContactAnnotation.yaml)
+
+### Date annotations
+
+```{r}
+date_annotations <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  annotations <- dataset$annotations
+  annotations <- annotations[annotations$name == "DATE",]
+  data.frame(
+    noteId = paste0(annotations$patient_id, "-", annotations$note_index),
+    annotationType = "Date",
+    start = annotations$start,
+    length = annotations$length,
+    text = annotations$text,
+    format = "",
+    stringsAsFactors = FALSE)
+})
+names(date_annotations) <- names(datasets)
+```
+
+### Person name annotations
+
+Schema: Annotation.yaml
+
+```{r}
+person_name_annotations <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  annotations <- dataset$annotations
+  annotations <- annotations[annotations$name == "NAME",]
+  data.frame(
+    noteId = paste0(annotations$patient_id, "-", annotations$note_index),
+    annotationType = "PersonName",
+    start = annotations$start,
+    length = annotations$length,
+    text = annotations$text,
+    stringsAsFactors = FALSE)
+})
+names(person_name_annotations) <- names(datasets)
+```
+
+
+### Physical address annotations
+
+Schema: 
+
+```{r}
+# Lookup table used to convert address type
+addressTypeLUT <- data.frame(
+  i2b2 = c("CITY", 
+           "COUNTRY", 
+           "HOSPITAL", 
+           "LOCATION-OTHER", 
+           "ORGANIZATION", 
+           "STATE", 
+           "STREET", 
+           "ZIP"),
+  nlp_sandbox = c("city",
+                  "country",
+                  "hospital",
+                  "other",
+                  "organization",
+                  "state",
+                  "street",
+                  "zip")
+)
+physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  annotations <- dataset$annotations
+  annotations <- annotations[annotations$name == "LOCATION",]
+  data.frame(
+    noteId = paste0(annotations$patient_id, "-", annotations$note_index),
+    annotationType = "PhysicalAddress",
+    start = annotations$start,
+    length = annotations$length,
+    text = annotations$text,
+    type = addressTypeLUT$nlp_sandbox[match(annotations$TYPE, addressTypeLUT$i2b2)],
+    stringsAsFactors = FALSE)
+})
+names(physical_address_annotations) <- names(datasets)
+```
+
+# Exporting data to JSON files
+
+### Exporting annotations
+
+```{r}
+# create output dir if needed
+dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+# save the annotations of the training and evaluation set
+noop <- lapply(names(datasets), function(dataset_name) {
+  annotations_json <- jsonlite::toJSON(
+    c(date_annotations[[dataset_name]] %>% purrr::transpose(), 
+      person_name_annotations[[dataset_name]] %>% purrr::transpose(),
+      physical_address_annotations[[dataset_name]] %>% purrr::transpose()),
+    auto_unbox = TRUE,
+    pretty = TRUE)
+  write(annotations_json, output_files[[dataset_name]]$annotations_json)
+})
+```
+
+
+### Exporting patients
+
+```{r}
+# create output dir if needed
+dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+# save the patients of the training and evaluation set
+noop <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  patient_ids <- sort(unique(dataset$annotations$patient_id))
+  
+  patients <- lapply(patient_ids, function(patient_id) {
+    list(
+      identifier = patient_id,
+      gender = 'unknown'
+    )
+  })
+  patients_json <- jsonlite::toJSON(patients, auto_unbox = TRUE, pretty = TRUE)
+  write(patients_json, output_files[[dataset_name]]$patients_json)
+})
+```
+
+
+### Exporting notes
+
+```{r}
+# create output dir if needed
+dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
+# save the note of a given patient to one JSON file
+# jsonlite::toJSON() escapes them double quotes
+noop <- lapply(names(datasets), function(dataset_name) {
+  dataset <- datasets[[dataset_name]]
+  patient_ids <- sort(unique(dataset$annotations$patient_id))
+  
+  mclapply(patient_ids, function(patient_id) {
+    tag <- paste0(patient_id, "-")
+    xml_paths <- sort(dataset$xml_paths[grepl(tag, dataset$xml_paths)])
+    notes <- lapply(xml_paths, function(xml_path){
+      note_xml_doc <- read_xml(xml_path, options = "NOCDATA")
+      note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
+      list(
+        text = note_text,
+        noteType = "",
+        patientId = "PATIENT_ID"
+      )
+    })
+    notes_json <- jsonlite::toJSON(notes, auto_unbox = TRUE, pretty = TRUE)
+    write(notes_json, file.path(job_output_dir, paste0(dataset_name, "_set_patient_", patient_id, "_notes.json")))
+  }, mc.cores = num_cores, mc.set.seed = TRUE)
+})
+```
