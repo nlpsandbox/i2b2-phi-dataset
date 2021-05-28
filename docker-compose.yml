@@ -2,15 +2,15 @@ version: "3.8"
 
 services:
   rstudio:
-    image: nlpsandbox/i2b2-phi-dataset:0.1.0
+    image: syn22277123/i2b2-phi-dataset:1.0.0
     build:
       context: .
       dockerfile: Dockerfile
     container_name: i2b2-phi-dataset
+    command: rstudio
     env_file:
       - .env
     volumes:
       - .:/home/rstudio/i2b2-phi-dataset:rw
     ports:
       - "${HOST_PORT}:8787"
-    command: rstudio
