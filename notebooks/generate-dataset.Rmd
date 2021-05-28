@@ -80,10 +80,10 @@ options(reticulate.repl.quiet = TRUE)
 conda_list(conda = "auto")
 ```
 
-Activate the environment `i2b2-phi-analysis`.
+Activate the environment `i2b2-phi-dataset`.
 
 ```{r}
-use_condaenv("i2b2-phi-analysis", required = TRUE)
+use_condaenv("i2b2-phi-dataset", required = TRUE)
 ```
 
 ### Logging into Synapse
