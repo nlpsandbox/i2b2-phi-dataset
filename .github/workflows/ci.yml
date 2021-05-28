@@ -12,7 +12,7 @@ on:
   pull_request:
 
 env:
-  docker_repository: nlpsandbox/i2b2-phi-dataset
+  docker_repository: syn22277123/i2b2-phi-dataset
   # github.event.repository.clone_url not available for on: schedule
   clone_url: https://github.com/nlpsandbox/i2b2-phi-dataset.git
   # github.event.repository.default_branch not available for on: schedule
@@ -114,8 +114,9 @@ jobs:
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: docker.synapse.org
+        username: ${{ secrets.SYNAPSE_USERNAME }}
+        password: ${{ secrets.SYNAPSE_TOKEN }}
 
     - name: Build image
       uses: docker/build-push-action@v2
@@ -152,6 +153,7 @@ jobs:
       id: docker_push
       uses: docker/build-push-action@v2
       with:
+        registry: docker.synapse.org
         context: .
         file: Dockerfile
         builder: ${{ steps.buildx.outputs.name }}
@@ -167,13 +169,13 @@ jobs:
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-    - name: Update Docker Hub repository description
-      if: steps.prep.outputs.push_image == 'true'
-      uses: peter-evans/dockerhub-description@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-        repository: ${{ env.docker_repository }}
+    # - name: Update Docker Hub repository description
+    #   if: steps.prep.outputs.push_image == 'true'
+    #   uses: peter-evans/dockerhub-description@v2
+    #   with:
+    #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+    #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    #     repository: ${{ env.docker_repository }}
 
     # - name: Prepare to publish HTML notebooks to GH Pages
     #   if: steps.prep.outputs.push_notebooks == 'true'
