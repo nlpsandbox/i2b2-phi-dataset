@@ -69,6 +69,8 @@ syn$login()
 ```{r}
 # NLP Sandbox schemas version
 schemas_version <- "1.1.1"
+# Output dataset version
+dataset_version <- "0.1.0"
 
 # Original files of the 2014 i2b2 NLP De-identification challenge.
 dataset_archives = list(
@@ -86,25 +88,27 @@ dataset_archives = list(
   )
 )
 
+output_dir_syn_id <- "syn25807888"
+
 project_dir <- rprojroot::find_rstudio_root_file()
 data_dir <- file.path(project_dir, "data")
 output_dir <- file.path(project_dir, "output")
 
 # Output
 job_name <- "i2b2-phi-dataset-nlpsandbox"
-job_version <- "0.1.1"
+job_version <- dataset_version
 job_dir <- file.path(output_dir, job_name)
 job_output_dir <- file.path(job_dir, job_version)
 
 # Local outputs
 output_files = list(
   training = list(
-    annotations_tsv = file.path(job_output_dir, paste0("training-set-annotations.tsv")),
+    # annotations_tsv = file.path(job_output_dir, paste0("training-set-annotations.tsv")),
     annotations_json = file.path(job_output_dir, paste0("training-set-annotations.json")),
     patients_json = file.path(job_output_dir, paste0("training-set-patients.json"))
   ),
   evaluation = list(
-    annotations_tsv = file.path(job_output_dir, paste0("evaluation-set-annotations.tsv")),
+    # annotations_tsv = file.path(job_output_dir, paste0("evaluation-set-annotations.tsv")),
     annotations_json = file.path(job_output_dir, paste0("evaluation-set-annotations.json")),
     patients_json = file.path(job_output_dir, paste0("evaluation-set-patients.json"))
   )
@@ -477,4 +481,31 @@ noop <- lapply(names(datasets), function(dataset_name) {
     write(notes_json, file.path(job_output_dir, paste0(dataset_name, "_set_patient_", patient_id, "_notes.json")))
   }, mc.cores = num_cores, mc.set.seed = TRUE)
 })
+```
+
+
+
+# Exporting data files to Synapse
+
+```{python}
+from os import walk, path
+import synapseclient
+from synapseclient import Project, Folder, File, Link
+
+print(r.output_dir)
+syn = synapseclient.Synapse()
+syn.login()
+
+# This is the output directory on Synapse
+output_dir = syn.get(output_dir_syn_id)
+
+# Create the job directory
+job_output_dir = Folder(r.job_version, parent=output_dir)
+job_output_dir = syn.store(job_output_dir)
+for dirpath, dirnames, filenames in walk(r.job_output_dir):
+  for filename in filenames:
+    filepath = path.join(dirpath, filename)
+    print('Pushing to Synapse %s' % path.join(dirpath, filename))
+    file = File(filepath, parent=job_output_dir)
+    file = syn.store(file)
 ```
