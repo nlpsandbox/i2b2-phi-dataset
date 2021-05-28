@@ -1,6 +1,6 @@
 ---
-title: "Interacting with Synapse API"
-author: "Sage Bionetworks"
+title: "Generating the i2b2 PHI dataset for the NLP Sandbox"
+author: "Thomas Schaffter (thomas.schaffter@pm.me)"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -27,15 +27,45 @@ library(xml2)
 
 # Introduction
 
-1. Pull the data of the 2014 i2b2 NLP De-identification Challenge from Synapse.
-2. Convert the dataset to the NLP Sandbox schemas.
-3. Push the new dataset to Synapse (training and evaluation).
+[NLPSandbox.io] is an open platform for benchmarking modular natural language
+processing (NLP) tools on both public and private datasets. Academics, students,
+and industry professionals are invited to browse the available tasks and
+participate by developing and submitting an NLP Sandbox tool.
+
+One of the series of tasks benchmarked in the NLP Sandbox are PHI annotation and
+de-identification tasks. One of the datasets used to benchmark the performance
+of NLP Sandbox tools submitted to solve these tasks is from the [2014 i2b2 NLP
+De-identification Challenge]. This dataset do not include sensitive information
+since the authors have replaced the PHIs with synthetic values that prevent the
+re-identification of patients.
+
+This notebook takes as input the official training and evaluation dataset files
+of the 2014 i2b2 NLP De-identification Challenge and generate a new dataset
+using the [NLP Sandbox Schemas]. The JSON files generated can then be stored in
+an instance of the [NLP Sandbox Data Node]. A Python script that reads a dataset
+JSON file and push its content to a Data Node is provided in the GitHub
+repository of the [NLP Sandbox Client Library for Python].
 
 
 
 # Setup
 
 ### Requirements
+
+This notebook needs three files downloaded from the [2014 i2b2 NLP
+De-identification Challenge Dataset] and stored in [Synapse].
+
+Name       | Description | Synapse ID
+-----------|-------------|-----------
+Training Data: PHI Gold Set 1   | Training notes and annotations (part 1). | `syn23196860`
+Training Data: PHI Gold Set 2   | Training notes and annotations (part 2). | `syn23196850`
+Test Data: PHI Gold Set - Fixed | Evaluation notes and annotations.        | `syn23196857`
+
+The terms and conditions of use for this i2b2 dataset prevent us from making
+these Synapse files publicly available. You need to download these files from
+their official repository (link above) and push these files to Synapse. The last
+step is to update the Synapse IDs of these files in this notebook (see Section
+`Configuration`).
 
 Set the value of `SYNAPSE_TOKEN` in the configuration file `.env` to one of your
 Synapse personal access tokens. Token can be generated in Synapse via your User
@@ -88,15 +118,6 @@ dataset_archives = list(
   )
 )
 
-dataset_output_syn_folders = list(
-  full = list(
-    syn_id = "syn25807888"
-  ),
-  example = list(
-    syn_id = "syn25812243"
-  )
-)
-
 project_dir <- rprojroot::find_rstudio_root_file()
 data_dir <- file.path(project_dir, "data")
 output_dir <- file.path(project_dir, "output")
@@ -130,26 +151,26 @@ num_cores = parallel::detectCores()
 # Pulling i2b2 dataset from Synapse
 
 Get the dataset archives from Synapse, extract them and get the paths to the XML
-files. Each XML file includes the text of the clinical note (TEXT node) and a 
+files. Each XML file includes the text of the clinical note (TEXT node) and a
 list of annotations (TAGS node).
 
 ```{r}
 dataset_archives <- lapply(dataset_archives, function(archive) {
-  file_handle <- syn$get(archive$synId, downloadLocation=data_dir, 
+  file_handle <- syn$get(archive$synId, downloadLocation=data_dir,
                          ifcollision='overwrite.local')
-  
+
   # Extract tar.gz archive and get list of XML files
   untar(file_handle$path, exdir=data_dir)
   xml_paths <- file.path(data_dir, untar(file_handle$path, list=TRUE)) %>%
     str_subset(pattern = "\\.xml$")
-  
+
   archive$xml_paths <- xml_paths
   archive
 })
 ```
 
-The training and evaluation datasets are split into multiple parts. Combine 
-these parts into training and evaluation datasets. 
+The training and evaluation datasets are split into multiple parts. Combine
+these parts into training and evaluation datasets.
 
 ```{r}
 datasets <- list(
@@ -176,7 +197,7 @@ lapply(datasets, function(dataset) { length(dataset$xml_paths) })
 
 
 
-# Generating i2b2 dataset using NLP Sandbox schemas
+# Generating i2b2 dataset using NLP Sandbox Schemas
 
 Extract the annotations from the XML files and save them to data frames.
 
@@ -188,24 +209,24 @@ datasets <- lapply(datasets, function(dataset) {
       purrr::map_dfr(~ {
         # save the primary type of the annotations
         name <- xml_name(.)
-        
+
         # attributes of the XML tag
-        attrs <- xml_attrs(.) %>% 
+        attrs <- xml_attrs(.) %>%
           tibble::enframe() %>%
           tidyr::spread(name, value)
-        
+
         # extract patient id and note index from the note filename
         df <- strsplit(fs::path_ext_remove(fs::path_file(xml_path)), "-")[[1]]
         patient_id <- df[1]
         note_index <- df[2]
-          
+
         # combine the annotations
         cbind.data.frame(name, attrs, patient_id, note_index) %>%
-          tibble::set_tidy_names() %>% 
+          tibble::set_tidy_names() %>%
           as_tibble()
       })
   }, mc.cores = num_cores, mc.set.seed = TRUE))
-  
+
   dataset$annotations <- annotations
   dataset
 })
@@ -311,13 +332,13 @@ names(person_name_annotations) <- names(datasets)
 ```{r}
 # Lookup table used to convert address types
 addressTypeLUT <- data.frame(
-  i2b2 = c("CITY", 
-           "COUNTRY", 
-           "HOSPITAL", 
-           "LOCATION-OTHER", 
-           "ORGANIZATION", 
-           "STATE", 
-           "STREET", 
+  i2b2 = c("CITY",
+           "COUNTRY",
+           "HOSPITAL",
+           "LOCATION-OTHER",
+           "ORGANIZATION",
+           "STATE",
+           "STREET",
            "ZIP"),
   nlp_sandbox = c("city",
                   "country",
@@ -345,18 +366,18 @@ physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
 names(physical_address_annotations) <- names(datasets)
 ```
 
-### ID
+### ID annotations
 
 ```{r}
 # Lookup table used to convert id types
 idTypeLUT <- data.frame(
-  i2b2 = c("ACCOUNT", 
-           "BIOID", 
-           "DEVICE", 
-           "HEALTHPLAN", 
-           "IDNUM", 
-           "LICENSE", 
-           "MEDICALRECORD", 
+  i2b2 = c("ACCOUNT",
+           "BIOID",
+           "DEVICE",
+           "HEALTHPLAN",
+           "IDNUM",
+           "LICENSE",
+           "MEDICALRECORD",
            "SSN",
            "VEHICLE"),
   nlp_sandbox = c("account",
@@ -386,15 +407,15 @@ id_annotations <- lapply(names(datasets), function(dataset_name) {
 names(id_annotations) <- names(datasets)
 ```
 
-### Contact information
+### Contact information annotations
 
 ```{r}
 # Lookup table used to convert contact types
 contactTypeLUT <- data.frame(
-  i2b2 = c("EMAIL", 
-           "FAX", 
-           "IPADDR", 
-           "PHONE", 
+  i2b2 = c("EMAIL",
+           "FAX",
+           "IPADDR",
+           "PHONE",
            "URL"),
   nlp_sandbox = c("email",
                   "fax",
@@ -437,7 +458,7 @@ noop <- lapply(names(datasets), function(dataset_name) {
   # patient_ids <- patient_ids[1:2]
   patient_bundles <- lapply(patient_ids, function(patient_id) {
     # patient_id <- "110"
-    
+
     # create FHIR Patient object
     patient <- list(
       identifier = patient_id,
@@ -457,25 +478,25 @@ noop <- lapply(names(datasets), function(dataset_name) {
         noteType="",
         patientId="PATIENT_ID"
       )
-      
+
       # create the Annotation objects for the note specified
       noteId <- gsub(pattern = "\\.xml$", "", basename(xml_path))
-    
+
       ## get date annotations
       df <- date_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
       text_date_annotations <- df %>% purrr::transpose()
-      
+
       ## get person name annotations
       df <- person_name_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
       text_person_name_annotations <- df %>% purrr::transpose()
-      
+
       ## get physical address annotations
       df <- physical_address_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
       text_physical_address_annotations <- df %>% purrr::transpose()
-      
+
       annotation=list(
         annotationSource=list(
           resourceSource=list(
@@ -493,18 +514,18 @@ noop <- lapply(names(datasets), function(dataset_name) {
         annotation=annotation
       )
     })
-    
+
     # create patient bundle
     patient_bundle <- list(
       patient=patient,
       note_bundles=note_bundles
     )
   })
-  
+
   data <- list(
     patient_bundles=patient_bundles
   )
-  
+
   # create output dataset directory and save bundles
   # dataset_dir <- file.path(job_output_dir, dataset_name)
   dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
@@ -513,7 +534,9 @@ noop <- lapply(names(datasets), function(dataset_name) {
 })
 ```
 
-### Preview dataset
+### Example dataset
+
+The data from a single patient (patient ID `110`).
 
 ```{r}
 # create output dir if needed
@@ -543,25 +566,25 @@ patient_bundles <- lapply(patient_ids, function(patient_id) {
       noteType="",
       patientId="PATIENT_ID"
     )
-    
+
     # create the Annotation objects for the note specified
     noteId <- gsub(pattern = "\\.xml$", "", basename(xml_path))
-  
+
     ## get date annotations
     df <- date_annotations[[dataset_name]]
     df <- df[df$noteId == noteId,]
     text_date_annotations <- df %>% purrr::transpose()
-    
+
     ## get person name annotations
     df <- person_name_annotations[[dataset_name]]
     df <- df[df$noteId == noteId,]
     text_person_name_annotations <- df %>% purrr::transpose()
-    
+
     ## get physical address annotations
     df <- physical_address_annotations[[dataset_name]]
     df <- df[df$noteId == noteId,]
     text_physical_address_annotations <- df %>% purrr::transpose()
-    
+
     annotation=list(
       annotationSource=list(
         resourceSource=list(
@@ -579,7 +602,7 @@ patient_bundles <- lapply(patient_ids, function(patient_id) {
       annotation=annotation
     )
   })
-  
+
   # create patient bundle
   patient_bundle <- list(
     patient=patient,
@@ -598,31 +621,12 @@ data_json <- jsonlite::toJSON(data, auto_unbox = TRUE, pretty = TRUE)
 write(data_json, file.path(job_output_dir, paste0("i2b2-phi-dataset-example.json")))
 ```
 
+<!-- Links -->
 
-
-# Exporting data files to Synapse
-
-### Full dataset
-
-```{python}
-from os import walk, path
-import synapseclient
-from synapseclient import Project, Folder, File, Link
-
-print(r.output_dir)
-syn = synapseclient.Synapse()
-syn.login()
-
-# This is the output directory on Synapse
-output_dir = syn.get(output_dir_syn_id)
-
-# Create the job directory
-job_output_dir = Folder(r.job_version, parent=output_dir)
-job_output_dir = syn.store(job_output_dir)
-for dirpath, dirnames, filenames in walk(r.job_output_dir):
-  for filename in filenames:
-    filepath = path.join(dirpath, filename)
-    print('Pushing to Synapse %s' % path.join(dirpath, filename))
-    file = File(filepath, parent=job_output_dir)
-    file = syn.store(file)
-```
+[NLPSandbox.io]: https://nlpsandbox.io
+[Synapse]: https://synapse.org
+[2014 i2b2 NLP De-identification Challenge]: https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007
+[2014 i2b2 NLP De-identification Challenge Dataset]: https://portal.dbmi.hms.harvard.edu/projects/n2c2-nlp/
+[NLP Sandbox Schemas]: https://github.com/nlpsandbox/nlpsandbox-schemas
+[NLP Sandbox Data Node]: https://github.com/nlpsandbox/data-node
+[NLP Sandbox Client Library for Python]: https://github.com/nlpsandbox/nlpsandbox-client
