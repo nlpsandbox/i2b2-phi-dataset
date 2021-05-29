@@ -55,8 +55,7 @@ Rmd Notebook | Description | HTML Notebook
 
 ## Usage
 
-1. Create and edit the configuration file. You can initially start RStudio using
-   this configuration as-is.
+1. Create and edit the configuration file.
 
        cp .env.example .env
 
