@@ -11,7 +11,7 @@
 
 <meta name="author" content="NLP Sandbox Team (team@nlpsandbox.io)" />
 
-<meta name="date" content="2021-05-28" />
+<meta name="date" content="2021-05-29" />
 
 <title>Generating the i2b2 PHI dataset for the NLP Sandbox</title>
 
@@ -257,7 +257,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Generating the i2b2 PHI dataset for the NLP Sandbox</h1>
 <h4 class="author">NLP Sandbox Team (<a href="mailto:team@nlpsandbox.io" class="email">team@nlpsandbox.io</a>)</h4>
-<h4 class="date">2021-05-28</h4>
+<h4 class="date">2021-05-29</h4>
 
 </div>
 
@@ -265,8 +265,8 @@ div.tocify {
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p><a href="https://nlpsandbox.io">NLPSandbox.io</a> is an open platform for benchmarking modular natural language processing (NLP) tools on both public and private datasets. Academics, students, and industry professionals are invited to browse the available tasks and participate by developing and submitting an NLP Sandbox tool.</p>
-<p>One of the series of tasks benchmarked in the NLP Sandbox are PHI annotation and de-identification tasks. One of the datasets used to benchmark the performance of NLP Sandbox tools submitted to solve these tasks is from the <a href="https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007">2014 i2b2 NLP De-identification Challenge</a>. This dataset do not include sensitive information since the authors have replaced the PHIs with synthetic values that prevent the re-identification of patients.</p>
-<p>This notebook takes as input the official training and evaluation dataset files of the 2014 i2b2 NLP De-identification Challenge and generate a new dataset using the <a href="https://github.com/nlpsandbox/nlpsandbox-schemas">NLP Sandbox Schemas</a>. The JSON files generated can then be stored in an instance of the <a href="https://github.com/nlpsandbox/data-node">NLP Sandbox Data Node</a>. A Python script that reads a dataset JSON file and push its content to a Data Node is provided in the GitHub repository of the <a href="https://github.com/nlpsandbox/nlpsandbox-client">NLP Sandbox Client Library for Python</a>.</p>
+<p>A series of tasks benchmarked in the NLP Sandbox are PHI annotation and de-identification tasks. One of the datasets used to benchmark the performance of NLP Sandbox tools submitted to solve these tasks is from the <a href="https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007">2014 i2b2 NLP De-identification Challenge</a>. This dataset do not include sensitive information since the authors have replaced the PHIs with synthetic values that prevent the re-identification of patients.</p>
+<p>This notebook takes as input the official training and evaluation dataset files of the 2014 i2b2 NLP De-identification Challenge and generates a new dataset using the <a href="https://github.com/nlpsandbox/nlpsandbox-schemas">NLP Sandbox Schemas</a>. The JSON files generated can then be stored in an instance of the <a href="https://github.com/nlpsandbox/data-node">NLP Sandbox Data Node</a>. A Python script that reads a dataset JSON file and push its content to a Data Node is provided in the GitHub repository of the <a href="https://github.com/nlpsandbox/nlpsandbox-client">NLP Sandbox Client Library for Python</a>.</p>
 </div>
 <div id="setup" class="section level1">
 <h1>Setup</h1>
@@ -314,11 +314,11 @@ div.tocify {
 conda_list(conda = &quot;auto&quot;)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["python"],"name":[2],"type":["chr"],"align":["left"]}],"data":[{"1":"i2b2-phi-analysis","2":"/opt/miniconda/envs/i2b2-phi-analysis/bin/python"},{"1":"sage-bionetworks","2":"/opt/miniconda/envs/sage-bionetworks/bin/python"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["python"],"name":[2],"type":["chr"],"align":["left"]}],"data":[{"1":"i2b2-phi-dataset","2":"/opt/miniconda/envs/i2b2-phi-dataset/bin/python"},{"1":"sage-bionetworks","2":"/opt/miniconda/envs/sage-bionetworks/bin/python"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>Activate the environment <code>i2b2-phi-analysis</code>.</p>
-<pre class="r"><code>use_condaenv(&quot;i2b2-phi-analysis&quot;, required = TRUE)</code></pre>
+<p>Activate the environment <code>i2b2-phi-dataset</code>.</p>
+<pre class="r"><code>use_condaenv(&quot;i2b2-phi-dataset&quot;, required = TRUE)</code></pre>
 </div>
 <div id="logging-into-synapse" class="section level3">
 <h3>Logging into Synapse</h3>
@@ -850,9 +850,9 @@ write(data_json, file.path(job_output_dir, paste0(&quot;i2b2-phi-dataset-example
 <div id="generated-files" class="section level3">
 <h3>Generated files</h3>
 <pre class="r"><code>list.files(path=job_output_dir, full.names=TRUE)</code></pre>
-<pre><code>## [1] &quot;/data/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-evaluation.json&quot;
-## [2] &quot;/data/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-example.json&quot;   
-## [3] &quot;/data/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-training.json&quot;</code></pre>
+<pre><code>## [1] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-evaluation.json&quot;
+## [2] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-example.json&quot;   
+## [3] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.0.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-training.json&quot;</code></pre>
 <!-- Links -->
 </div>
 </div>
