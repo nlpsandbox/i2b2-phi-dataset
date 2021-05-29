@@ -265,7 +265,7 @@ div.tocify {
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p><a href="https://nlpsandbox.io">NLPSandbox.io</a> is an open platform for benchmarking modular natural language processing (NLP) tools on both public and private datasets. Academics, students, and industry professionals are invited to browse the available tasks and participate by developing and submitting an NLP Sandbox tool.</p>
-<p>A series of tasks benchmarked in the NLP Sandbox are PHI annotation and de-identification tasks. One of the datasets used to benchmark the performance of NLP Sandbox tools submitted to solve these tasks is from the <a href="https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007">2014 i2b2 NLP De-identification Challenge</a>. This dataset do not include sensitive information since the authors have replaced the PHIs with synthetic values that prevent the re-identification of patients.</p>
+<p>A series of tasks benchmarked in the NLP Sandbox are PHI annotation and de-identification tasks. One of the datasets used to benchmark the performance of NLP Sandbox tools submitted to solve these tasks is from the <a href="https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007">2014 i2b2 NLP De-identification Challenge</a>. This dataset does not include sensitive information since the authors have replaced the PHIs with synthetic values that prevent the re-identification of patients.</p>
 <p>This notebook takes as input the official training and evaluation dataset files of the 2014 i2b2 NLP De-identification Challenge and generates a new dataset using the <a href="https://github.com/nlpsandbox/nlpsandbox-schemas">NLP Sandbox Schemas</a>. The JSON files generated can then be stored in an instance of the <a href="https://github.com/nlpsandbox/data-node">NLP Sandbox Data Node</a>. A Python script that reads a dataset JSON file and push its content to a Data Node is provided in the GitHub repository of the <a href="https://github.com/nlpsandbox/nlpsandbox-client">NLP Sandbox Client Library for Python</a>.</p>
 </div>
 <div id="setup" class="section level1">
@@ -352,21 +352,19 @@ project_dir &lt;- rprojroot::find_rstudio_root_file()
 data_dir &lt;- file.path(project_dir, &quot;data&quot;)
 output_dir &lt;- file.path(project_dir, &quot;output&quot;)
 
-# Output
+# Output folders
 job_name &lt;- &quot;i2b2-phi-dataset-nlpsandbox&quot;
 job_version &lt;- dataset_version
 job_dir &lt;- file.path(output_dir, job_name)
 job_output_dir &lt;- file.path(job_dir, job_version)
 
-# Local outputs
+# Local output files
 output_files = list(
   training = list(
-    # annotations_tsv = file.path(job_output_dir, paste0(&quot;training-set-annotations.tsv&quot;)),
     annotations_json = file.path(job_output_dir, paste0(&quot;training-set-annotations.json&quot;)),
     patients_json = file.path(job_output_dir, paste0(&quot;training-set-patients.json&quot;))
   ),
   evaluation = list(
-    # annotations_tsv = file.path(job_output_dir, paste0(&quot;evaluation-set-annotations.tsv&quot;)),
     annotations_json = file.path(job_output_dir, paste0(&quot;evaluation-set-annotations.json&quot;)),
     patients_json = file.path(job_output_dir, paste0(&quot;evaluation-set-patients.json&quot;))
   )
