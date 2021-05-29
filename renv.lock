@@ -20,7 +20,7 @@
       "Package": "MASS",
       "Version": "7.3-54",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "0e59129db205112e3963904db67fd0dc"
     },
     "Matrix": {
@@ -186,10 +186,10 @@
     },
     "fansi": {
       "Package": "fansi",
-      "Version": "0.4.2",
+      "Version": "0.5.0",
       "Source": "Repository",
       "Repository": "RSPM",
-      "Hash": "fea074fb67fe4c25d47ad09087da847d"
+      "Hash": "d447b40982c576a72b779f0a3b3da227"
     },
     "farver": {
       "Package": "farver",
@@ -322,7 +322,7 @@
       "Package": "mgcv",
       "Version": "1.8-35",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "89fd8b2ad4a6cb4979b78cf2a77ab503"
     },
     "mime": {

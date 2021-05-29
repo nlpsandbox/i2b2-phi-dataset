@@ -1,7 +1,7 @@
 FROM sagebionetworks/rstudio:4.1.0-efb64703
 
-LABEL maintainer="thomas.schaffter@protonmail.com"
-LABEL description="Exploration of the 2014 i2b2 PHI annotation dataset"
+LABEL maintainer="team@nlpsandbox.io"
+LABEL description="Generation of the i2b2 PHI dataset for the NLP Sandbox"
 
 # Create conda environments
 COPY conda /tmp/conda

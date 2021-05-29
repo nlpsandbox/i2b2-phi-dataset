@@ -27,20 +27,22 @@ with RStudio and Python generated from the template GitHub repository
 evaluation dataset files of the 2014 i2b2 NLP De-identification Challenge and
 generates a new dataset using the [NLP Sandbox Schemas].
 
-All packages:
+### Specification
 
-- R (see [renv.lock]).
-- Python (see [conda/i2b2-phi-dataset/environment.yml]).
+- NLP Sandbox Schemas version: 1.1.1
+- NLP Sandbox dataset
+  - Name: `i2b2-phi-dataset`
+  - Version: 1.0.0
 
 ### Requirements
 
 - [Docker Engine] >=19.03.0
-- Synapse.org user account
+- [Synapse.org] user account
 
 ## Notebooks
 
-The notebooks below are rendered to HTML and published to GitHub Pages by the
-[CI/CD workflow of this repository].
+The notebooks below are rendered to HTML and published to GitHub Pages by this
+[CI/CD workflow].
 
 Rmd Notebook | Description | HTML Notebook
 -------- | ----------- | -------------
@@ -109,9 +111,10 @@ running and hard to roll back.
 [Apache License 2.0]: https://github.com/nlpsandbox/i2b2-phi-dataset/blob/main/LICENSE
 [renv.lock]: renv.lock
 [conda/i2b2-phi-dataset/environment.yml]: conda/i2b2-phi-dataset/environment.yml
-[CI/CD workflow of this repository]: .github/workflows/ci.yml
+[CI/CD workflow]: .github/workflows/ci.yml
 [Docker Engine]: https://docs.docker.com/engine/install/
 [docker.synapse.org/syn22277123/i2b2-phi-dataset]: https://www.synapse.org/#!Synapse:syn25813728
 [2014 i2b2 NLP De-identification Challenge]: https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007
 [2014 i2b2 NLP De-identification Challenge Dataset]: https://portal.dbmi.hms.harvard.edu/projects/n2c2-nlp/
 [NLP Sandbox Schemas]: https://github.com/nlpsandbox/nlpsandbox-schemas
+[Synapse.org]: https://synapse.org
