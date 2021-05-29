@@ -32,7 +32,7 @@ processing (NLP) tools on both public and private datasets. Academics, students,
 and industry professionals are invited to browse the available tasks and
 participate by developing and submitting an NLP Sandbox tool.
 
-One of the series of tasks benchmarked in the NLP Sandbox are PHI annotation and
+A series of tasks benchmarked in the NLP Sandbox are PHI annotation and
 de-identification tasks. One of the datasets used to benchmark the performance
 of NLP Sandbox tools submitted to solve these tasks is from the [2014 i2b2 NLP
 De-identification Challenge]. This dataset do not include sensitive information
@@ -40,7 +40,7 @@ since the authors have replaced the PHIs with synthetic values that prevent the
 re-identification of patients.
 
 This notebook takes as input the official training and evaluation dataset files
-of the 2014 i2b2 NLP De-identification Challenge and generate a new dataset
+of the 2014 i2b2 NLP De-identification Challenge and generates a new dataset
 using the [NLP Sandbox Schemas]. The JSON files generated can then be stored in
 an instance of the [NLP Sandbox Data Node]. A Python script that reads a dataset
 JSON file and push its content to a Data Node is provided in the GitHub
@@ -80,10 +80,10 @@ options(reticulate.repl.quiet = TRUE)
 conda_list(conda = "auto")
 ```
 
-Activate the environment `i2b2-phi-analysis`.
+Activate the environment `i2b2-phi-dataset`.
 
 ```{r}
-use_condaenv("i2b2-phi-analysis", required = TRUE)
+use_condaenv("i2b2-phi-dataset", required = TRUE)
 ```
 
 ### Logging into Synapse

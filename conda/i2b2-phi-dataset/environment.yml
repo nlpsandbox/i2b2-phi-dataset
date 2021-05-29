@@ -1,4 +1,4 @@
-name: i2b2-phi-analysis
+name: i2b2-phi-dataset
 channels:
   - defaults
 dependencies:
