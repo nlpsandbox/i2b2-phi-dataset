@@ -105,7 +105,7 @@ running and hard to roll back.
 <!-- Links -->
 
 [NLPSandbox.io]: https://nlpsandbox.io
-[sagebionetworks/rstudio]: https://github.com/Sage-Bionetworks/rstudioenabling-and-disabling-version-updates
+[sagebionetworks/rstudio]: https://github.com/Sage-Bionetworks/rstudio
 [semantic versioning]: https://semver.org/
 [Apache License 2.0]: https://github.com/nlpsandbox/i2b2-phi-dataset/blob/main/LICENSE
 [renv.lock]: renv.lock
