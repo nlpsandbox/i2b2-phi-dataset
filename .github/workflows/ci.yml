@@ -1,12 +1,9 @@
 name: CI
 
 on:
-  schedule:
-    - cron: '0 10 * * 0'  # every Sunday at 10am
   push:
     branches:
       - main
-      - develop
     tags:
       - '*.*.*'
   pull_request:
@@ -19,7 +16,60 @@ env:
   default_branch: main
 
 jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create configuration
+      run: |
+        DOCKER_IMAGE=${{ env.docker_repository }}
+        VERSION=noop
+        PUSH_IMAGE=false
+        PUSH_NOTEBOOKS=false
+        if [ "${{ github.event_name }}" = "schedule" ]; then
+          VERSION=weekly
+          PUSH_IMAGE=true
+          PUSH_NOTEBOOKS=true
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        elif [[ $GITHUB_REF == refs/heads/* ]]; then
+          VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+          if [ "${{ github.event.repository.default_branch }}" = "$VERSION" ]; then
+            VERSION=edge
+            PUSH_IMAGE=true
+            PUSH_NOTEBOOKS=true
+          fi
+        elif [[ $GITHUB_REF == refs/pull/* ]]; then
+          VERSION=pr-${{ github.event.number }}
+          PUSH_IMAGE=false
+          PUSH_NOTEBOOKS=true
+        fi
+        TAGS="${DOCKER_IMAGE}:${VERSION}"
+        if [[ $VERSION == "edge" ]]; then
+          TAGS="$TAGS,${DOCKER_IMAGE}:edge-${GITHUB_SHA::8}"
+        elif [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+          MINOR=${VERSION%.*}
+          MAJOR=${MINOR%.*}
+          TAGS="$TAGS,${DOCKER_IMAGE}:latest"
+          PUSH_IMAGE=true
+          PUSH_NOTEBOOKS=true
+        fi
+        printf "%s\n" \
+          "version=${VERSION}" \
+          "version_major=${MAJOR}" \
+          "version_minor=${MINOR}" \
+          "tags=${TAGS}"
+          "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+          "push_image=${PUSH_IMAGE}" \
+          "push_notebooks=${PUSH_NOTEBOOKS}" | tee -a .github_env
+
+    - name: Upload .github_env
+      uses: actions/upload-artifact@v2
+      with:
+        name: GITHUB_ENV
+        path: .github_env
+
   lint:
+    needs: [configure]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -50,51 +100,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Prepare build
-      id: prep
-      run: |
-        DOCKER_IMAGE=${{ env.docker_repository }}
-        VERSION=noop
-        PUSH_IMAGE=false
-        PUSH_NOTEBOOKS=false
-        if [ "${{ github.event_name }}" = "schedule" ]; then
-          VERSION=weekly
-          PUSH_IMAGE=true
-          PUSH_NOTEBOOKS=true
-        elif [[ $GITHUB_REF == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/}
-        elif [[ $GITHUB_REF == refs/heads/* ]]; then
-          VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
-          if [ "${{ github.event.repository.default_branch }}" = "$VERSION" ]; then
-            VERSION=edge
-            PUSH_IMAGE=true
-            PUSH_NOTEBOOKS=true
-          fi
-        elif [[ $GITHUB_REF == refs/pull/* ]]; then
-          VERSION=pr-${{ github.event.number }}
-          PUSH_IMAGE=false
-          PUSH_NOTEBOOKS=true
-        fi
-        TAGS="${DOCKER_IMAGE}:${VERSION}"
-        if [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-          MINOR=${VERSION%.*}
-          MAJOR=${MINOR%.*}
-          TAGS="$TAGS,${DOCKER_IMAGE}:${MINOR}"
-          TAGS="$TAGS,${DOCKER_IMAGE}:${MAJOR}"
-          TAGS="$TAGS,${DOCKER_IMAGE}:latest"
-          TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION}-${GITHUB_SHA::8}"
-          PUSH_IMAGE=true
-          PUSH_NOTEBOOKS=true
-        # elif [ "${{ github.event_name }}" = "push" ]; then
-        #   TAGS="$TAGS,${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
-        fi
-        echo ::set-output name=version::${VERSION}
-        echo ::set-output name=version_major::${MAJOR}
-        echo ::set-output name=version_minor::${MINOR}
-        echo ::set-output name=tags::${TAGS}
-        echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-        echo ::set-output name=push_image::${PUSH_IMAGE}
-        echo ::set-output name=push_notebooks::${PUSH_NOTEBOOKS}
+    - name: Download .github_env
+      uses: actions/download-artifact@v2
+      with:
+        name: GITHUB_ENV
+        path: .
+
+    - name: Restore $GITHUB_ENV
+      run: cat .github_env >> $GITHUB_ENV
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
@@ -128,8 +141,6 @@ jobs:
         push: false
         platforms: linux/amd64
         tags: rstudio-cached:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
 
     - name: Create .env
       run: |
@@ -149,7 +160,7 @@ jobs:
           render /project/notebooks/*.Rmd
 
     - name: Push image
-      if: steps.prep.outputs.push_image == 'true'
+      if: env.push_image == 'true'
       id: docker_push
       uses: docker/build-push-action@v2
       with:
@@ -158,39 +169,29 @@ jobs:
         file: Dockerfile
         builder: ${{ steps.buildx.outputs.name }}
         push: true
-        platforms: linux/amd64,linux/arm64
-        tags: ${{ steps.prep.outputs.tags }}
+        platforms: linux/amd64
+        tags: ${{ env.tags }}
         labels: |
-          org.opencontainers.image.created=${{ steps.prep.outputs.created }}
+          org.opencontainers.image.created=${{ env.created }}
           org.opencontainers.image.source=${{ github.repositoryUrl }}
-          org.opencontainers.image.version=${{ steps.prep.outputs.version }}
+          org.opencontainers.image.version=${{ env.version }}
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.licenses=${{ github.event.repository.license.name }}
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-    # - name: Update Docker Hub repository description
-    #   if: steps.prep.outputs.push_image == 'true'
-    #   uses: peter-evans/dockerhub-description@v2
-    #   with:
-    #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-    #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
-    #     repository: ${{ env.docker_repository }}
 
     - name: Prepare to publish HTML notebooks to GH Pages
-      if: steps.prep.outputs.push_notebooks == 'true'
+      if: env.push_notebooks == 'true'
       run: |
         git clone ${{ env.clone_url }} \
           --branch gh-pages --single-branch gh-pages
 
         # Update gh-pages: version specified
-        NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version }}/notebooks
+        NOTEBOOKS_TARGET_DIR=gh-pages/${{ env.version }}/notebooks
         rm -fr ${NOTEBOOKS_TARGET_DIR}
         mkdir -p ${NOTEBOOKS_TARGET_DIR}
         cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
         # Update gh-pages: latest, major, and minor versions
-        if [ ! -z "${{ steps.prep.outputs.version_major }}" ]; then
+        if [ ! -z "${{ env.version_major }}" ]; then
           # Update latest (e.g. "1.2.3" => "latest")
           NOTEBOOKS_TARGET_DIR=gh-pages/latest/notebooks
           rm -fr ${NOTEBOOKS_TARGET_DIR}
@@ -198,13 +199,13 @@ jobs:
           cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
           # Update major version (e.g. "1.2.3" => "1")
-          NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_major }}/notebooks
+          NOTEBOOKS_TARGET_DIR=gh-pages/${{ env.version_major }}/notebooks
           rm -fr ${NOTEBOOKS_TARGET_DIR}
           mkdir -p ${NOTEBOOKS_TARGET_DIR}
           cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
 
           # Update minor version (e.g. "1.2.3" => "1.2")
-          NOTEBOOKS_TARGET_DIR=gh-pages/${{ steps.prep.outputs.version_minor }}/notebooks
+          NOTEBOOKS_TARGET_DIR=gh-pages/${{ env.version_minor }}/notebooks
           rm -fr ${NOTEBOOKS_TARGET_DIR}
           mkdir -p ${NOTEBOOKS_TARGET_DIR}
           cp -R notebooks/*.html ${NOTEBOOKS_TARGET_DIR}
@@ -218,7 +219,7 @@ jobs:
         # that.
 
     - name: Push to gh-pages
-      if: steps.prep.outputs.push_notebooks == 'true'
+      if: env.push_notebooks == 'true'
       uses: ad-m/github-push-action@master
       with:
         branch: gh-pages
