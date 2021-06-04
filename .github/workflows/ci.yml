@@ -60,13 +60,13 @@ jobs:
           "tags=${TAGS}"
           "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
           "push_image=${PUSH_IMAGE}" \
-          "push_notebooks=${PUSH_NOTEBOOKS}" | tee -a .GITHUB_ENV
+          "push_notebooks=${PUSH_NOTEBOOKS}" | tee -a .github_env
 
-    - name: Upload .GITHUB_ENV
+    - name: Upload .github_env
       uses: actions/upload-artifact@v2
       with:
         name: GITHUB_ENV
-        path: .GITHUB_ENV
+        path: .github_env
 
   lint:
     needs: [configure]
