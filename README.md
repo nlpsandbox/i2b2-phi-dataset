@@ -18,8 +18,8 @@ One of the datasets used to benchmark the performance of PHI annotators on
 dataset is publicly available and can be used by NLP developers to locally test
 their tools before submitting them to the NLP Sandbox. Once submitted, PHI
 annotators will be evaluated on the 2014 i2b2 dataset as well as on private
-datasets provided by different partner organizations that include MCW, Mayo
-Clinic, and UW.
+datasets provided by different partner organizations, including MCW, Mayo Clinic
+and UW.
 
 In order to use the i2b2 dataset to develop your NLP Sandbox PHI annotator, its
 annotations must first be mapped to the annotations defined by the [NLP Sandbox
