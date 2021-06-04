@@ -29,14 +29,14 @@ you can use to generate files that you can use to map the dataset. The files
 generated at the end of the notebook can then be pushed to a local or remote
 instance of the [NLP Sandbox Data Node] using the [NLP Sandbox CLI].
 
-### Specification
+## Specification
 
-- NLP Sandbox Schemas version: 1.1.2
+- NLP Sandbox schemas version: 1.1.2
 - NLP Sandbox dataset
   - Name: `i2b2-phi-dataset`
   - Version: 1.0.0
 
-### Requirements
+## Requirements
 
 - [Docker Engine] >=19.03.0
 - [Synapse.org] user account
@@ -67,6 +67,23 @@ default username (`rstudio`) and the password specified in `.env`.
 
 To stop RStudio, enter `Ctrl+C` followed by `docker compose down`.  If running
 in detached mode, you will only need to enter `docker compose down`.
+
+## Configuring the CI/CD workflow
+
+The [CI/CD workflow] of this repository performs the following actions:
+
+- Generate HTML notebooks from R notebook and publishes them to GitHub Pages.
+- Build the Docker image [docker.synapse.org/syn22277123/i2b2-phi-dataset] and
+  push it to Synapse Docker Registry.
+
+If you decided to fork this repository, you will need to update the environment
+variables defined at the top of the [CI/CD workflow]. You also need to create
+the following [GitHub Secrets]:
+
+- `RSTUDIO_PASSWORD`: Simply use a random password.
+- `SYNAPSE_USERNAME`: Your [Synapse.org] username.
+- `SYNAPSE_TOKEN`: A [personal access token (PAT)] that has the permissions
+  `View`, `Download` and `Modify`.
 
 ## Versioning
 
@@ -101,7 +118,6 @@ running and hard to roll back.
 <!-- Links -->
 
 [NLPSandbox.io]: https://nlpsandbox.io
-[sagebionetworks/rstudio]: https://github.com/Sage-Bionetworks/rstudio
 [semantic versioning]: https://semver.org/
 [Apache License 2.0]: https://github.com/nlpsandbox/i2b2-phi-dataset/blob/main/LICENSE
 [renv.lock]: renv.lock
@@ -115,3 +131,5 @@ running and hard to roll back.
 [Synapse.org]: https://synapse.org
 [NLP Sandbox Data Node]: https://github.com/nlpsandbox/data-node
 [NLP Sandbox CLI]: https://github.com/nlpsandbox/nlpsandbox-client
+[GitHub Secrets]: https://docs.github.com/en/actions/reference/encrypted-secrets
+[personal access token (PAT)]: https://help.synapse.org/docs/Managing-Your-Account.2055405596.html
