@@ -1,10 +1,10 @@
-# i2b2 PHI dataset for the NLP Sandbox
+[![nlpsandbox.io](https://nlpsandbox.github.io/nlpsandbox-themes/banner/Banner@3x.png)](https://nlpsandbox.io)
+
+# Generating the i2b2 PHI dataset for the NLP Sandbox
 
 [![GitHub Release](https://img.shields.io/github/release/nlpsandbox/i2b2-phi-dataset.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset/releases)
 [![GitHub CI](https://img.shields.io/github/workflow/status/nlpsandbox/i2b2-phi-dataset/CI.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset)
 [![GitHub License](https://img.shields.io/github/license/nlpsandbox/i2b2-phi-dataset.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/nlpsandbox/i2b2-phi-dataset/blob/main/LICENSE)
-
-Generation of the i2b2 PHI dataset for the NLP Sandbox
 
 ## Introduction
 
@@ -13,23 +13,25 @@ processing (NLP) tools on both public and private datasets. Academics, students,
 and industry professionals are invited to browse the available tasks and
 participate by developing and submitting an NLP Sandbox tool.
 
-A series of tasks benchmarked in the NLP Sandbox are PHI annotation and
-de-identification tasks. One of the datasets used to benchmark the performance
-of NLP Sandbox tools submitted to solve these tasks is from the [2014 i2b2 NLP
-De-identification Challenge]. This dataset do not include sensitive information
-since the authors have replaced the PHIs with synthetic values that prevent the
-re-identification of patients.
+One of the datasets used to benchmark the performance of PHI annotators on
+[NLPSandbox.io] is the [2014 i2b2 NLP De-identification Challenge Dataset]. This
+dataset is publicly available and can be used by NLP developers to locally test
+their tools before submitting them to the NLP Sandbox. Once submitted, PHI
+annotators will be evaluated on the 2014 i2b2 dataset as well as on private
+datasets provided by different partner organizations that include MCW, Mayo
+Clinic, and UW.
 
-This repository provides a portable and reproducible development environment
-with RStudio and Python generated from the template GitHub repository
-[sagebionetworks/rstudio]. This environment provides a notebook (see
-[Notebooks](#notebooks)) that takes as input the official training and
-evaluation dataset files of the 2014 i2b2 NLP De-identification Challenge and
-generates a new dataset using the [NLP Sandbox Schemas].
+In order to use the i2b2 dataset to develop your NLP Sandbox PHI annotator, its
+annotations must first be mapped to the annotations defined by the [NLP Sandbox
+schemas]. Because one must agree to not redistribute the i2b2 dataset prior to
+downloading it, even in a modified form, we provide a dockerized R notebook that
+you can use to generate files that you can use to map the dataset. The files
+generated at the end of the notebook can then be pushed to a local or remote
+instance of the [NLP Sandbox Data Node] using the [NLP Sandbox CLI].
 
 ### Specification
 
-- NLP Sandbox Schemas version: 1.1.1
+- NLP Sandbox Schemas version: 1.1.2
 - NLP Sandbox dataset
   - Name: `i2b2-phi-dataset`
   - Version: 1.0.0
@@ -41,12 +43,9 @@ generates a new dataset using the [NLP Sandbox Schemas].
 
 ## Notebooks
 
-The notebooks below are rendered to HTML and published to GitHub Pages by this
-[CI/CD workflow].
-
 Rmd Notebook | Description | HTML Notebook
 -------- | ----------- | -------------
-[generate-dataset.Rmd](notebooks/generate-dataset.Rmd)         | Generation of the i2b2 PHI dataset for the NLP Sandbox.                                | [![HTML notebook](https://img.shields.io/badge/latest-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://nlpsandbox.github.io/rstudio/latest/notebooks/generate-dataset.html)
+[generate-dataset.Rmd](notebooks/generate-dataset.Rmd)         | Generation of the i2b2 PHI dataset for the NLP Sandbox.                                | [![HTML notebook](https://img.shields.io/badge/latest-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://nlpsandbox.github.io/i2b2-phi-dataset/latest/notebooks/generate-dataset.html)
 
 > Important: Please make sure when you write your own notebooks that no
 > sensitive information ends up being publicly available. Please check with the
@@ -84,15 +83,12 @@ Pages and the Docker image [docker.synapse.org/syn22277123/i2b2-phi-dataset].
 
 The table below describes the GH Pages tags available.
 
-| Tag name                        | Moving | Description
-|---------------------------------|--------|------------
-| `latest`                        | Yes    | Latest stable release.
-| `edge`                          | Yes    | Lastest commit made to the default branch.
-| `weekly`                        | Yes    | Weekly release from the default branch.
-| `<major>`                       | Yes    | Latest stable major release of this project.
-| `<major>.<minor>`               | Yes    | Latest stable minor release of this project.
-| `<major>.<minor>.<patch>`       | Yes    | Latest stable patch release of this project.
-| `<major>.<minor>.<patch>-<sha>` | No     | Same as above but with the reference to the git commit.
+| Tag name                    | Moving | Description
+|-----------------------------|--------|------------
+| `latest`                    | Yes    | Latest stable release.
+| `edge`                      | Yes    | Latest commit made to the default branch.
+| `edge-<sha>`                | No     | Same as above with the reference to the git commit.
+| `<major>.<minor>.<patch>`   | No     | Stable release.
 
 You should avoid using a moving tag like `latest` when deploying containers in
 production, because this makes it hard to track which version of the image is
@@ -115,5 +111,7 @@ running and hard to roll back.
 [docker.synapse.org/syn22277123/i2b2-phi-dataset]: https://www.synapse.org/#!Synapse:syn25813728
 [2014 i2b2 NLP De-identification Challenge]: https://dx.doi.org/10.1016%2Fj.jbi.2015.06.007
 [2014 i2b2 NLP De-identification Challenge Dataset]: https://portal.dbmi.hms.harvard.edu/projects/n2c2-nlp/
-[NLP Sandbox Schemas]: https://github.com/nlpsandbox/nlpsandbox-schemas
+[NLP Sandbox schemas]: https://github.com/nlpsandbox/nlpsandbox-schemas
 [Synapse.org]: https://synapse.org
+[NLP Sandbox Data Node]: https://github.com/nlpsandbox/data-node
+[NLP Sandbox CLI]: https://github.com/nlpsandbox/nlpsandbox-client
