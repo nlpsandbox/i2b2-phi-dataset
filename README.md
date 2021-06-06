@@ -34,7 +34,7 @@ instance of the [NLP Sandbox Data Node] using the [NLP Sandbox CLI].
 - NLP Sandbox schemas version: 1.1.2
 - NLP Sandbox dataset
   - Name: `i2b2-phi-dataset`
-  - Version: 1.0.0
+  - Version: 1.1.0
 
 ## Requirements
 
