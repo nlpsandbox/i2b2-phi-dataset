@@ -80,7 +80,7 @@ If you decided to fork this repository, you will need to update the environment
 variables defined at the top of the [CI/CD workflow]. You also need to create
 the following [GitHub Secrets]:
 
-- `RSTUDIO_PASSWORD`: Simply use a random password.
+- `RSTUDIO_PASSWORD`: Random password.
 - `SYNAPSE_USERNAME`: Your [Synapse.org] username.
 - `SYNAPSE_TOKEN`: A [personal access token (PAT)] that has the permissions
   `View`, `Download` and `Modify`.
