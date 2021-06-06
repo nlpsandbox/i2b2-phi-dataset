@@ -293,7 +293,6 @@ date_annotations <- lapply(names(datasets), function(dataset_name) {
   annotations <- annotations[annotations$name == "DATE",]
   data.frame(
     noteId = paste0(annotations$patient_id, "-", annotations$note_index),
-    annotationType = "Date",
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
@@ -313,7 +312,6 @@ person_name_annotations <- lapply(names(datasets), function(dataset_name) {
   annotations <- annotations[annotations$name == "NAME",]
   data.frame(
     noteId = paste0(annotations$patient_id, "-", annotations$note_index),
-    annotationType = "PersonName",
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
@@ -352,7 +350,6 @@ physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
   annotations <- annotations[annotations$name == "LOCATION",]
   data.frame(
     noteId = paste0(annotations$patient_id, "-", annotations$note_index),
-    annotationType = "PhysicalAddress",
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
@@ -393,7 +390,6 @@ id_annotations <- lapply(names(datasets), function(dataset_name) {
   annotations <- annotations[annotations$name == "ID",]
   data.frame(
     noteId = paste0(annotations$patient_id, "-", annotations$note_index),
-    annotationType = "Id",
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
@@ -426,7 +422,6 @@ contact_annotations <- lapply(names(datasets), function(dataset_name) {
   annotations <- annotations[annotations$name == "CONTACT",]
   data.frame(
     noteId = paste0(annotations$patient_id, "-", annotations$note_index),
-    annotationType = "Contact",
     start = annotations$start,
     length = annotations$length,
     text = annotations$text,
