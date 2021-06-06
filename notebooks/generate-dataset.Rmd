@@ -493,6 +493,16 @@ noop <- lapply(names(datasets), function(dataset_name) {
       df <- physical_address_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
       text_physical_address_annotations <- df %>% purrr::transpose()
+      
+      ## get contact annotations
+      df <- contact_annotations[[dataset_name]]
+      df <- df[df$noteId == noteId,]
+      text_contact_annotations <- df %>% purrr::transpose()
+      
+      ## get id annotations
+      df <- id_annotations[[dataset_name]]
+      df <- df[df$noteId == noteId,]
+      text_id_annotations <- df %>% purrr::transpose()
 
       annotation=list(
         annotationSource=list(
@@ -502,7 +512,9 @@ noop <- lapply(names(datasets), function(dataset_name) {
         ),
         textDateAnnotations=text_date_annotations,
         textPersonNameAnnotations=text_person_name_annotations,
-        textPhysicalAddressAnnotations=text_physical_address_annotations
+        textPhysicalAddressAnnotations=text_physical_address_annotations,
+        textContactAnnotations=text_contact_annotations,
+        textIdAnnotations=text_id_annotations
       )
 
       # create note bundle
