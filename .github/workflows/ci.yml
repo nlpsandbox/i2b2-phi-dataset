@@ -57,7 +57,7 @@ jobs:
           "version=${VERSION}" \
           "version_major=${MAJOR}" \
           "version_minor=${MINOR}" \
-          "tags=${TAGS}"
+          "tags=${TAGS}" \
           "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
           "push_image=${PUSH_IMAGE}" \
           "push_notebooks=${PUSH_NOTEBOOKS}" | tee -a .github_env
