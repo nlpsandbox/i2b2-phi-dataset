@@ -280,7 +280,7 @@ Annotation | Description | NLP Sandbox schema
 -------- | ----------- | -------------
 `TextDateAnnotation`         | A date annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextDateAnnotation.yaml)
 `TextPersonNameAnnotation`         | A person name annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextPersonNameAnnotation)
-`TextPhysicalAddressAnnotation`         | A physical address annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextPhysicalAddressAnnotation.yaml)
+`TextLocationAnnotation`         | A location annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextLocationAnnotation.yaml)
 `TextIdAnnotation`         | An ID annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextIdAnnotation.yaml)
 `TextContactAnnotation`         | A contact annotation in a text.                                | [![HTML notebook](https://img.shields.io/badge/`r schemas_version`-blue.svg?color=1283c3&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=openapi-initiative)](https://github.com/nlpsandbox/nlpsandbox-schemas/tree/`r schemas_version`/openapi/commons/components/schemas/TextContactAnnotation.yaml)
 
@@ -322,11 +322,11 @@ names(person_name_annotations) <- names(datasets)
 ```
 
 
-### Physical address annotations
+### Location annotations
 
 ```{r}
-# Lookup table used to convert address types
-addressTypeLUT <- data.frame(
+# Lookup table used to convert location types
+locationTypeLUT <- data.frame(
   i2b2 = c("CITY",
            "COUNTRY",
            "HOSPITAL",
@@ -344,7 +344,7 @@ addressTypeLUT <- data.frame(
                   "street",
                   "zip")
 )
-physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
+location_annotations <- lapply(names(datasets), function(dataset_name) {
   dataset <- datasets[[dataset_name]]
   annotations <- dataset$annotations
   annotations <- annotations[annotations$name == "LOCATION",]
@@ -354,10 +354,10 @@ physical_address_annotations <- lapply(names(datasets), function(dataset_name) {
     length = annotations$length,
     text = annotations$text,
     confidence = 100,
-    addressType = addressTypeLUT$nlp_sandbox[match(annotations$TYPE, addressTypeLUT$i2b2)],
+    locationType = locationTypeLUT$nlp_sandbox[match(annotations$TYPE, locationTypeLUT$i2b2)],
     stringsAsFactors = FALSE)
 })
-names(physical_address_annotations) <- names(datasets)
+names(location_annotations) <- names(datasets)
 ```
 
 ### ID annotations
@@ -484,16 +484,16 @@ noop <- lapply(names(datasets), function(dataset_name) {
       df <- df[df$noteId == noteId,]
       text_person_name_annotations <- df %>% purrr::transpose()
 
-      ## get physical address annotations
-      df <- physical_address_annotations[[dataset_name]]
+      ## get location annotations
+      df <- location_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
-      text_physical_address_annotations <- df %>% purrr::transpose()
-      
+      text_location_annotations <- df %>% purrr::transpose()
+
       ## get contact annotations
       df <- contact_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
       text_contact_annotations <- df %>% purrr::transpose()
-      
+
       ## get id annotations
       df <- id_annotations[[dataset_name]]
       df <- df[df$noteId == noteId,]
@@ -507,7 +507,7 @@ noop <- lapply(names(datasets), function(dataset_name) {
         ),
         textDateAnnotations=text_date_annotations,
         textPersonNameAnnotations=text_person_name_annotations,
-        textPhysicalAddressAnnotations=text_physical_address_annotations,
+        textLocationAnnotations=text_location_annotations,
         textContactAnnotations=text_contact_annotations,
         textIdAnnotations=text_id_annotations
       )
@@ -584,10 +584,10 @@ patient_bundles <- lapply(patient_ids, function(patient_id) {
     df <- df[df$noteId == noteId,]
     text_person_name_annotations <- df %>% purrr::transpose()
 
-    ## get physical address annotations
-    df <- physical_address_annotations[[dataset_name]]
+    ## get location annotations
+    df <- location_annotations[[dataset_name]]
     df <- df[df$noteId == noteId,]
-    text_physical_address_annotations <- df %>% purrr::transpose()
+    text_location_annotations <- df %>% purrr::transpose()
 
     annotation=list(
       annotationSource=list(
@@ -597,7 +597,7 @@ patient_bundles <- lapply(patient_ids, function(patient_id) {
       ),
       textDateAnnotations=text_date_annotations,
       textPersonNameAnnotations=text_person_name_annotations,
-      textPhysicalAddressAnnotations=text_physical_address_annotations
+      textLocationAnnotations=text_location_annotations
     )
 
     # create note bundle
