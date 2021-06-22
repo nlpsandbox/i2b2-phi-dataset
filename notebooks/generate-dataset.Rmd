@@ -467,7 +467,7 @@ noop <- lapply(names(datasets), function(dataset_name) {
       note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
       note <- list(
         text=note_text,
-        noteType="",
+        type="",
         patientId="PATIENT_ID"
       )
 
@@ -548,7 +548,7 @@ dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
 
 dataset_name <- "evaluation"
 dataset <- datasets[[dataset_name]]
-patient_ids <- c("110")
+patient_ids <- as.character(100:109)
 
 # patient_ids <- patient_ids[1:2]
 patient_bundles <- lapply(patient_ids, function(patient_id) {
@@ -567,7 +567,7 @@ patient_bundles <- lapply(patient_ids, function(patient_id) {
     note_text <- xml_text(xml_find_all(note_xml_doc, "//TEXT"), trim = FALSE)
     note <- list(
       text=note_text,
-      noteType="",
+      type="",
       patientId="PATIENT_ID"
     )
 
