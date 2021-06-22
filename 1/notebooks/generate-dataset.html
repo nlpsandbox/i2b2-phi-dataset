@@ -11,7 +11,7 @@
 
 <meta name="author" content="NLP Sandbox Team (team@nlpsandbox.io)" />
 
-<meta name="date" content="2021-06-21" />
+<meta name="date" content="2021-06-22" />
 
 <title>Generating the i2b2 PHI dataset for the NLP Sandbox</title>
 
@@ -257,7 +257,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Generating the i2b2 PHI dataset for the NLP Sandbox</h1>
 <h4 class="author">NLP Sandbox Team (<a href="mailto:team@nlpsandbox.io" class="email">team@nlpsandbox.io</a>)</h4>
-<h4 class="date">2021-06-21</h4>
+<h4 class="date">2021-06-22</h4>
 
 </div>
 
@@ -693,7 +693,7 @@ noop &lt;- lapply(names(datasets), function(dataset_name) {
       note_text &lt;- xml_text(xml_find_all(note_xml_doc, &quot;//TEXT&quot;), trim = FALSE)
       note &lt;- list(
         text=note_text,
-        noteType=&quot;&quot;,
+        type=&quot;&quot;,
         patientId=&quot;PATIENT_ID&quot;
       )
 
@@ -771,7 +771,7 @@ dir.create(job_output_dir, recursive = TRUE, showWarnings = FALSE)
 
 dataset_name &lt;- &quot;evaluation&quot;
 dataset &lt;- datasets[[dataset_name]]
-patient_ids &lt;- c(&quot;110&quot;)
+patient_ids &lt;- as.character(100:109)
 
 # patient_ids &lt;- patient_ids[1:2]
 patient_bundles &lt;- lapply(patient_ids, function(patient_id) {
@@ -790,7 +790,7 @@ patient_bundles &lt;- lapply(patient_ids, function(patient_id) {
     note_text &lt;- xml_text(xml_find_all(note_xml_doc, &quot;//TEXT&quot;), trim = FALSE)
     note &lt;- list(
       text=note_text,
-      noteType=&quot;&quot;,
+      type=&quot;&quot;,
       patientId=&quot;PATIENT_ID&quot;
     )
 
@@ -850,9 +850,9 @@ write(data_json, file.path(job_output_dir, paste0(&quot;i2b2-phi-dataset-example
 <div id="generated-files" class="section level3">
 <h3>Generated files</h3>
 <pre class="r"><code>list.files(path=job_output_dir, full.names=TRUE)</code></pre>
-<pre><code>## [1] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-evaluation.json&quot;
-## [2] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-example.json&quot;   
-## [3] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.0PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-training.json&quot;</code></pre>
+<pre><code>## [1] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.1PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-evaluation.json&quot;
+## [2] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.1PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-example.json&quot;   
+## [3] &quot;/project/output/i2b2-phi-dataset-nlpsandbox/1.2.1PASSWORD=domp.vig_psar4FESM/i2b2-phi-dataset-training.json&quot;</code></pre>
 <!-- Links -->
 </div>
 </div>
