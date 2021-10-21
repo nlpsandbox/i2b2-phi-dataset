@@ -6,15 +6,18 @@ updates:
     schedule:
       interval: "monthly"
     target-branch: "main"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
     target-branch: "main"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "pip"
     directory: "/conda/i2b2-phi-dataset"
     schedule:
       interval: "monthly"
     target-branch: "main"
+    open-pull-requests-limit: 0
