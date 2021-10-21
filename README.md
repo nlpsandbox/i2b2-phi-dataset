@@ -1,3 +1,5 @@
+This notebook is now available in the repository [nlpsandbox/notebooks](https://github.com/nlpsandbox/notebooks).
+
 [![nlpsandbox.io](https://nlpsandbox.github.io/nlpsandbox-themes/banner/Banner@3x.png)](https://nlpsandbox.io)
 
 # Generating the i2b2 PHI dataset for the NLP Sandbox
